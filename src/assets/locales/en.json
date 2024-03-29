@@ -148,6 +148,7 @@
   },
   "media": {
     "episodeDisplay": "S{{season}} E{{episode}}",
+    "unreleased": "Unreleased",
     "types": {
       "movie": "Movie",
       "show": "Show"
@@ -295,6 +296,7 @@
         "enableSubtitles": "Enable Subtitles",
         "experienceSection": "Viewing experience",
         "playbackItem": "Playback settings",
+        "audioItem": "Audio",
         "qualityItem": "Quality",
         "sourceItem": "Video sources",
         "subtitleItem": "Subtitle settings",
@@ -317,7 +319,7 @@
         "unknownOption": "Unknown"
       },
       "subtitles": {
-        "customChoice": "Select subtitle from file",
+        "customChoice": "Drop or upload file",
         "customizeLabel": "Customize",
         "offChoice": "Off",
         "settings": {
@@ -326,7 +328,8 @@
           "fixCapitals": "Fix capitalization"
         },
         "title": "Subtitles",
-        "unknownLanguage": "Unknown"
+        "unknownLanguage": "Unknown",
+        "dropSubtitleFile": "Drop subtitle file here"
       }
     },
     "metadata": {
@@ -389,6 +392,13 @@
         "text": "We have searched through our providers and cannot find the media you are looking for! We do not host the media and have no control over what is available. Please click 'Show details' below for more details.",
         "text2": "We have searched through our providers and cannot find the media you are looking for! We do not host the media and have no control over what is available. Please click 'Show details' below for more details... <bold>Did you enable the extension for this site?</bold>",
         "title": "We couldn't find that"
+      },
+      "extensionFailure": {
+        "badge": "Extension disabled",
+        "homeButton": "Go home",
+        "enableExtension": "Enable extension",
+        "title": "Please enable the extension",
+        "text": "You've installed the movie-web extension. To start using it, you need to enable the extension for this site."
       }
     },
     "time": {

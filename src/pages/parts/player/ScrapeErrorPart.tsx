@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { useLocation } from "react-router-dom";
 
-import { isAllowedExtensionVersion } from "@/backend/extension/compatibility";
-import { extensionInfo } from "@/backend/extension/messaging";
+import { sendPage } from "@/backend/extension/messaging";
 import { Button } from "@/components/buttons/Button";
 import { Icons } from "@/components/Icon";
 import { IconPill } from "@/components/layout/IconPill";
@@ -12,33 +11,17 @@ import { Paragraph } from "@/components/text/Paragraph";
 import { Title } from "@/components/text/Title";
 import { ScrapingItems, ScrapingSegment } from "@/hooks/useProviderScrape";
 import { ErrorContainer, ErrorLayout } from "@/pages/layouts/ErrorLayout";
+import { getExtensionState } from "@/utils/extension";
+import type { ExtensionStatus } from "@/utils/extension";
 import { getProviderApiUrls } from "@/utils/proxyUrls";
 
 import { ErrorCardInModal } from "../errors/ErrorCard";
-
-type ExtensionStatus =
-  | "unknown"
-  | "failed"
-  | "disallowed"
-  | "noperms"
-  | "outdated"
-  | "success";
 
 export interface ScrapeErrorPartProps {
   data: {
     sources: Record<string, ScrapingSegment>;
     sourceOrder: ScrapingItems[];
   };
-}
-
-async function getExtensionState(): Promise<ExtensionStatus> {
-  const info = await extensionInfo();
-  if (!info) return "unknown"; // cant talk to extension
-  if (!info.success) return "failed"; // extension failed to respond
-  if (!info.allowed) return "disallowed"; // extension is not enabled on this page
-  if (!info.hasPermission) return "noperms"; // extension has no perms to do it's tasks
-  if (!isAllowedExtensionVersion(info.version)) return "outdated"; // extension is too old
-  return "success"; // no problems
 }
 
 export function ScrapeErrorPart(props: ScrapeErrorPartProps) {
@@ -65,8 +48,56 @@ export function ScrapeErrorPart(props: ScrapeErrorPartProps) {
   }, [props, location]);
 
   useEffect(() => {
-    getExtensionState().then(setExtensionState);
-  }, []);
+    getExtensionState().then((state: ExtensionStatus) => {
+      setExtensionState(state);
+    });
+  }, [t]);
+
+  if (extensionState === "disallowed") {
+    return (
+      <ErrorLayout>
+        <ErrorContainer>
+          <IconPill icon={Icons.LOCK}>
+            {t("player.scraping.extensionFailure.badge")}
+          </IconPill>
+          <Title>{t("player.scraping.extensionFailure.title")}</Title>
+          <Paragraph>
+            <Trans
+              i18nKey="player.scraping.extensionFailure.text"
+              components={{
+                bold: (
+                  <span className="font-bold" style={{ color: "#cfcfcf" }} />
+                ),
+              }}
+            />
+          </Paragraph>
+          <div className="flex gap-3">
+            <Button
+              href="/"
+              theme="secondary"
+              padding="md:px-12 p-2.5"
+              className="mt-6"
+            >
+              {t("player.scraping.extensionFailure.homeButton")}
+            </Button>
+            <Button
+              onClick={() => {
+                sendPage({
+                  page: "PermissionGrant",
+                  redirectUrl: window.location.href,
+                });
+              }}
+              theme="purple"
+              padding="md:px-12 p-2.5"
+              className="mt-6"
+            >
+              {t("player.scraping.extensionFailure.enableExtension")}
+            </Button>
+          </div>
+        </ErrorContainer>
+      </ErrorLayout>
+    );
+  }
 
   return (
     <ErrorLayout>
@@ -75,67 +106,16 @@ export function ScrapeErrorPart(props: ScrapeErrorPartProps) {
           {t("player.scraping.notFound.badge")}
         </IconPill>
         <Title>{t("player.scraping.notFound.title")}</Title>
-        <Paragraph>
-          {extensionState === "disallowed" ? (
-            <Trans
-              i18nKey="player.scraping.notFound.text2"
-              components={{
-                bold: (
-                  <span className="font-bold" style={{ color: "#cfcfcf" }} />
-                ),
-              }}
-            />
-          ) : (
-            <Trans
-              i18nKey="player.scraping.notFound.text"
-              components={{
-                bold: (
-                  <span className="font-bold" style={{ color: "#cfcfcf" }} />
-                ),
-              }}
-            />
-          )}
-        </Paragraph>
-        {extensionState === "disallowed" ? (
-          <div className="flex gap-3">
-            <Button
-              onClick={() => window.location.reload()}
-              theme="secondary"
-              padding="md:px-12 p-2.5"
-              className="mt-6"
-            >
-              {t("player.scraping.notFound.reloadButton")}
-            </Button>
-            <Button
-              href="/"
-              theme="secondary"
-              padding="md:px-12 p-2.5"
-              className="mt-6"
-            >
-              {t("player.scraping.notFound.homeButton")}
-            </Button>
-          </div>
-        ) : (
-          <div className="flex gap-3">
-            <Button
-              href="/"
-              theme="secondary"
-              padding="md:px-12 p-2.5"
-              className="mt-6"
-            >
-              {t("player.scraping.notFound.homeButton")}
-            </Button>
-            <Button
-              onClick={() => modal.show()}
-              theme="purple"
-              padding="md:px-12 p-2.5"
-              className="mt-6"
-            >
-              {t("player.scraping.notFound.detailsButton")}
-            </Button>
-          </div>
-        )}
-        {extensionState === "disallowed" && (
+        <Paragraph>{t("player.scraping.notFound.text")}</Paragraph>
+        <div className="flex gap-3">
+          <Button
+            href="/"
+            theme="secondary"
+            padding="md:px-12 p-2.5"
+            className="mt-6"
+          >
+            {t("player.scraping.notFound.homeButton")}
+          </Button>
           <Button
             onClick={() => modal.show()}
             theme="purple"
@@ -144,7 +124,7 @@ export function ScrapeErrorPart(props: ScrapeErrorPartProps) {
           >
             {t("player.scraping.notFound.detailsButton")}
           </Button>
-        )}
+        </div>
       </ErrorContainer>
       {error ? (
         <ErrorCardInModal
