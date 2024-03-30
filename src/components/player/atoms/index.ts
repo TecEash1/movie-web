@@ -6,6 +6,7 @@ export * from "./Skips";
 export * from "./Time";
 export * from "./LoadingSpinner";
 export * from "./AutoPlayStart";
+export * from "./AutoPlayStart";
 export * from "./Volume";
 export * from "./Title";
 export * from "./EpisodeTitle";

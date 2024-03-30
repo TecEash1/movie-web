@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Icon, Icons } from "@/components/Icon";
@@ -7,7 +7,6 @@ import { usePlayerMeta } from "@/components/player/hooks/usePlayerMeta";
 import { Transition } from "@/components/utils/Transition";
 import { PlayerMeta } from "@/stores/player/slices/source";
 import { usePlayerStore } from "@/stores/player/store";
-import { useProgressStore } from "@/stores/progress";
 
 function shouldShowNextEpisodeButton(
   time: number,
@@ -56,7 +55,11 @@ export function NextEpisodeButton(props: {
   const setShouldStartFromBeginning = usePlayerStore(
     (s) => s.setShouldStartFromBeginning,
   );
-  const updateItem = useProgressStore((s) => s.updateItem);
+  const [autoplayCountdown, setAutoplayCountdown] = React.useState<
+    number | null
+  >(null);
+  const autoplay = usePlayerStore((s) => s.autoplay);
+  const toggleAutoplay = usePlayerStore((s) => s.toggleAutoplay);
 
   let show = false;
   if (showingState === "always") show = true;
@@ -81,19 +84,44 @@ export function NextEpisodeButton(props: {
     setShouldStartFromBeginning(true);
     setDirectMeta(metaCopy);
     props.onChange?.(metaCopy);
-    const defaultProgress = { duration: 0, watched: 0 };
-    updateItem({
-      meta: metaCopy,
-      progress: defaultProgress,
-    });
-  }, [
-    setDirectMeta,
-    nextEp,
-    meta,
-    props,
-    setShouldStartFromBeginning,
-    updateItem,
-  ]);
+  }, [setDirectMeta, nextEp, meta, props, setShouldStartFromBeginning]);
+
+  useEffect(() => {
+    const hasVideoEnded = time >= duration - 2; // Consider a buffer of 2 seconds
+    if (
+      hasVideoEnded &&
+      showingState === "always" &&
+      !isHidden &&
+      status === "playing" &&
+      duration !== 0 &&
+      autoplay // Check if autoplay is enabled
+    ) {
+      setAutoplayCountdown(5); // Set the countdown duration (in seconds)
+    }
+  }, [time, duration, showingState, isHidden, status, autoplay]); // Add autoplay to dependencies
+
+  useEffect(() => {
+    let countdownInterval: NodeJS.Timeout | null = null;
+
+    if (autoplayCountdown !== null) {
+      countdownInterval = setInterval(() => {
+        setAutoplayCountdown((prevCountdown) => {
+          if (prevCountdown === 1) {
+            clearInterval(countdownInterval!); // Use non-null assertion operator
+            loadNextEpisode();
+            return null;
+          }
+          return prevCountdown! - 1; // Use non-null assertion operator
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (countdownInterval !== null) {
+        clearInterval(countdownInterval);
+      }
+    };
+  }, [autoplayCountdown, loadNextEpisode]);
 
   if (!meta?.episode || !nextEp) return null;
   if (metaType !== "show") return null;
@@ -111,10 +139,20 @@ export function NextEpisodeButton(props: {
         ])}
       >
         <Button
-          className="py-px box-content bg-buttons-secondary hover:bg-buttons-secondaryHover bg-opacity-90 text-buttons-secondaryText"
           onClick={hideNextEpisodeButton}
+          className="py-px box-content bg-buttons-secondary hover:bg-buttons-secondaryHover bg-opacity-90 text-buttons-secondaryText"
         >
-          {t("player.nextEpisode.cancel")}
+          Cancel
+        </Button>
+        <Button
+          onClick={toggleAutoplay}
+          className="py-px box-content bg-buttons-secondary hover:bg-buttons-secondaryHover bg-opacity-90 text-buttons-secondaryText"
+        >
+          {autoplayCountdown !== null
+            ? `Playing in ${autoplayCountdown} sec`
+            : autoplay
+              ? "Autoplay On"
+              : "Autoplay Off"}
         </Button>
         <Button
           onClick={() => loadNextEpisode()}

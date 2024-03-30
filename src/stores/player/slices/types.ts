@@ -1,5 +1,6 @@
 import { StateCreator } from "zustand";
 
+import { AutoplayState } from "@/stores/player/slices/autoplay";
 import { CastingSlice } from "@/stores/player/slices/casting";
 import { DisplaySlice } from "@/stores/player/slices/display";
 import { InterfaceSlice } from "@/stores/player/slices/interface";
@@ -14,7 +15,8 @@ export type AllSlices = InterfaceSlice &
   SourceSlice &
   DisplaySlice &
   CastingSlice &
-  ThumbnailSlice;
+  ThumbnailSlice &
+  AutoplayState;
 export type MakeSlice<Slice> = StateCreator<
   AllSlices,
   [["zustand/immer", never]],
