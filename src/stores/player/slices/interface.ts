@@ -23,6 +23,7 @@ export interface InterfaceSlice {
     canAirplay: boolean;
     isCasting: boolean;
     hideNextEpisodeBtn: boolean;
+    showNextEpisodeBtn: boolean;
     shouldStartFromBeginning: boolean;
     error?: DisplayError;
 
@@ -41,6 +42,7 @@ export interface InterfaceSlice {
   setHasOpenOverlay(state: boolean): void;
   setLastVolume(state: number): void;
   hideNextEpisodeButton(): void;
+  showNextEpisodeButton(): void;
   setShouldStartFromBeginning(val: boolean): void;
 }
 
@@ -60,6 +62,7 @@ export const createInterfaceSlice: MakeSlice<InterfaceSlice> = (set, get) => ({
     timeFormat: VideoPlayerTimeFormat.REGULAR,
     canAirplay: false,
     hideNextEpisodeBtn: false,
+    showNextEpisodeBtn: false,
     shouldStartFromBeginning: false,
   },
 
@@ -110,6 +113,11 @@ export const createInterfaceSlice: MakeSlice<InterfaceSlice> = (set, get) => ({
   hideNextEpisodeButton() {
     set((s) => {
       s.interface.hideNextEpisodeBtn = true;
+    });
+  },
+  showNextEpisodeButton() {
+    set((s) => {
+      s.interface.hideNextEpisodeBtn = false;
     });
   },
 });

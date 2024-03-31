@@ -12,10 +12,10 @@ function shouldShowNextEpisodeButton(
   time: number,
   duration: number,
 ): "always" | "hover" | "none" {
-  const percentage = time / duration;
   const secondsFromEnd = duration - time;
+  if (secondsFromEnd <= 5) return "always"; // Show the buttons when the video has 5 seconds or less remaining
   if (secondsFromEnd <= 30) return "always";
-  if (percentage >= 0.9) return "hover";
+  if (time / duration >= 0.9) return "hover";
   return "none";
 }
 
@@ -47,7 +47,6 @@ export function NextEpisodeButton(props: {
   const isHidden = usePlayerStore((s) => s.interface.hideNextEpisodeBtn);
   const meta = usePlayerStore((s) => s.meta);
   const { setDirectMeta } = usePlayerMeta();
-  const hideNextEpisodeButton = usePlayerStore((s) => s.hideNextEpisodeButton);
   const metaType = usePlayerStore((s) => s.meta?.type);
   const time = usePlayerStore((s) => s.progress.time);
   const showingState = shouldShowNextEpisodeButton(time, duration);
@@ -59,7 +58,38 @@ export function NextEpisodeButton(props: {
     number | null
   >(null);
   const autoplay = usePlayerStore((s) => s.autoplay);
-  const toggleAutoplay = usePlayerStore((s) => s.toggleAutoplay);
+  const [isAutoplayCancelled, setIsAutoplayCancelled] = React.useState(false);
+
+  const toggleAutoplay = useCallback(() => {
+    if (isAutoplayCancelled) {
+      setIsAutoplayCancelled(false);
+      setAutoplayCountdown(5); // Restart the countdown when the cancel button is clicked
+    } else {
+      usePlayerStore.getState().toggleAutoplay();
+    }
+  }, [isAutoplayCancelled]);
+
+  const hideNextEpisodeButton = useCallback(() => {
+    if (duration - time <= 2) {
+      setIsAutoplayCancelled((prevIsAutoplayCancelled) => {
+        const newIsAutoplayCancelled = !prevIsAutoplayCancelled;
+        if (newIsAutoplayCancelled) {
+          setAutoplayCountdown(null); // Stop the countdown when the cancel button is clicked
+        } else {
+          setAutoplayCountdown(5); // Restart the countdown when the cancel button is clicked
+        }
+        return newIsAutoplayCancelled;
+      });
+    } else {
+      usePlayerStore.getState().hideNextEpisodeButton(); // Hide the buttons if the video has more than 5 seconds remaining
+    }
+  }, [duration, time]);
+
+  useEffect(() => {
+    if (duration - time <= 2 && !isAutoplayCancelled && autoplay) {
+      usePlayerStore.getState().showNextEpisodeButton(); // Show the buttons when there are 5 seconds remaining
+    }
+  }, [time, duration, isAutoplayCancelled, autoplay]);
 
   let show = false;
   if (showingState === "always") show = true;
@@ -96,9 +126,13 @@ export function NextEpisodeButton(props: {
       duration !== 0 &&
       autoplay // Check if autoplay is enabled
     ) {
+      setIsAutoplayCancelled(false); // Reset the isAutoplayCancelled state when the video has 5 seconds or less remaining
       setAutoplayCountdown(5); // Set the countdown duration (in seconds)
+    } else if (time < duration - 2) {
+      setIsAutoplayCancelled(false); // Reset the isAutoplayCancelled state if the user rewinds the video to before the last 5 seconds
+      setAutoplayCountdown(null); // Reset the countdown if the user rewinds the video
     }
-  }, [time, duration, showingState, isHidden, status, autoplay]); // Add autoplay to dependencies
+  }, [time, duration, showingState, isHidden, status, autoplay]);
 
   useEffect(() => {
     let countdownInterval: NodeJS.Timeout | null = null;
@@ -106,12 +140,15 @@ export function NextEpisodeButton(props: {
     if (autoplayCountdown !== null) {
       countdownInterval = setInterval(() => {
         setAutoplayCountdown((prevCountdown) => {
+          if (prevCountdown === null) {
+            clearInterval(countdownInterval!);
+            return null;
+          }
           if (prevCountdown === 1) {
-            clearInterval(countdownInterval!); // Use non-null assertion operator
             loadNextEpisode();
             return null;
           }
-          return prevCountdown! - 1; // Use non-null assertion operator
+          return prevCountdown - 1;
         });
       }, 1000);
     }
@@ -138,19 +175,21 @@ export function NextEpisodeButton(props: {
           bottom,
         ])}
       >
-        <Button
-          onClick={hideNextEpisodeButton}
-          className="py-px box-content bg-buttons-secondary hover:bg-buttons-secondaryHover bg-opacity-90 text-buttons-secondaryText"
-        >
-          Cancel
-        </Button>
+        {!isAutoplayCancelled && (
+          <Button
+            onClick={hideNextEpisodeButton}
+            className="py-px box-content bg-buttons-secondary hover:bg-buttons-secondaryHover bg-opacity-90 text-buttons-secondaryText"
+          >
+            Cancel
+          </Button>
+        )}
         <Button
           onClick={toggleAutoplay}
           className="py-px box-content bg-buttons-secondary hover:bg-buttons-secondaryHover bg-opacity-90 text-buttons-secondaryText"
         >
           {autoplayCountdown !== null
             ? `Playing in ${autoplayCountdown} sec`
-            : autoplay
+            : autoplay && !isAutoplayCancelled
               ? "Autoplay On"
               : "Autoplay Off"}
         </Button>
