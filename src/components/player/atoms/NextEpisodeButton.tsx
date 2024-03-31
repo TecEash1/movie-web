@@ -61,13 +61,17 @@ export function NextEpisodeButton(props: {
   const [isAutoplayCancelled, setIsAutoplayCancelled] = React.useState(false);
 
   const toggleAutoplay = useCallback(() => {
+    if (autoplayCountdown !== null) {
+      // Don't do anything if the countdown is happening
+      return;
+    }
     if (isAutoplayCancelled) {
       setIsAutoplayCancelled(false);
       setAutoplayCountdown(5); // Restart the countdown when the cancel button is clicked
     } else {
       usePlayerStore.getState().toggleAutoplay();
     }
-  }, [isAutoplayCancelled]);
+  }, [isAutoplayCancelled, autoplayCountdown]);
 
   const hideNextEpisodeButton = useCallback(() => {
     if (duration - time <= 2) {
