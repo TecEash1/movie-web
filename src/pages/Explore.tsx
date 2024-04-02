@@ -1,3 +1,4 @@
+/* eslint-disable no-plusplus */
 /* eslint-disable react-hooks/rules-of-hooks */
 import React, { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
@@ -11,6 +12,8 @@ import { conf } from "@/setup/config";
 
 import { get } from "../backend/metadata/tmdb";
 import { Icon, Icons } from "../components/Icon";
+
+const pagesToFetch = 5;
 
 // Define the Media type
 interface Media {
@@ -77,8 +80,7 @@ export function ExplorePage() {
     const fetchMoviesForCategory = async (category: Category) => {
       try {
         const movies: any[] = [];
-        // eslint-disable-next-line no-plusplus
-        for (let page = 1; page <= 3; page++) {
+        for (let page = 1; page <= pagesToFetch; page++) {
           const data = await get<any>(category.endpoint, {
             api_key: conf().TMDB_READ_API_KEY,
             language: "en-US",
@@ -131,15 +133,20 @@ export function ExplorePage() {
   useEffect(() => {
     const fetchTVShowsForGenre = async (genreId: number) => {
       try {
-        const data = await get<any>("/discover/tv", {
-          api_key: conf().TMDB_READ_API_KEY,
-          with_genres: genreId.toString(),
-          language: "en-US",
-        });
+        const tvShows: any[] = [];
+        for (let page = 1; page <= pagesToFetch; page++) {
+          const data = await get<any>("/discover/tv", {
+            api_key: conf().TMDB_READ_API_KEY,
+            with_genres: genreId.toString(),
+            language: "en-US",
+            page: page.toString(),
+          });
 
+          tvShows.push(...data.results);
+        }
         setTVShowGenres((prevTVShowGenres) => ({
           ...prevTVShowGenres,
-          [genreId]: data.results,
+          [genreId]: tvShows,
         }));
       } catch (error) {
         console.error(`Error fetching TV shows for genre ${genreId}:`, error);
@@ -314,15 +321,20 @@ export function ExplorePage() {
   useEffect(() => {
     const fetchMoviesForGenre = async (genreId: number) => {
       try {
-        const data = await get<any>("/discover/movie", {
-          api_key: conf().TMDB_READ_API_KEY,
-          with_genres: genreId.toString(),
-          language: "en-US",
-        });
+        const movies: any[] = [];
+        for (let page = 1; page <= pagesToFetch; page++) {
+          const data = await get<any>("/discover/movie", {
+            api_key: conf().TMDB_READ_API_KEY,
+            with_genres: genreId.toString(),
+            language: "en-US",
+            page: page.toString(),
+          });
 
+          movies.push(...data.results);
+        }
         setGenreMovies((prevGenreMovies) => ({
           ...prevGenreMovies,
-          [genreId]: data.results,
+          [genreId]: movies,
         }));
       } catch (error) {
         console.error(`Error fetching movies for genre ${genreId}:`, error);
@@ -331,7 +343,6 @@ export function ExplorePage() {
 
     genres.forEach((genre) => fetchMoviesForGenre(genre.id));
   }, [genres]);
-
   useEffect(() => {
     let countdownInterval: NodeJS.Timeout;
     if (countdown !== null && countdown > 0) {
