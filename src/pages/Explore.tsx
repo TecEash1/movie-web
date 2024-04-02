@@ -9,10 +9,8 @@ import { WideContainer } from "@/components/layout/WideContainer";
 import { HomeLayout } from "@/pages/layouts/HomeLayout";
 import { conf } from "@/setup/config";
 
-import { proxiedFetch } from "../backend/helpers/fetch";
+import { get } from "../backend/metadata/tmdb";
 import { Icon, Icons } from "../components/Icon";
-
-const apiKey = "6cd21e642140057cd6362bf29f9a33d2";
 
 // Define the Media type
 interface Media {
@@ -47,21 +45,21 @@ interface Category {
 const categories: Category[] = [
   {
     name: "Now Playing",
-    endpoint: `https://api.themoviedb.org/3/movie/now_playing?language=en-US&api_key=${apiKey}`,
+    endpoint: "/movie/now_playing?language=en-US",
   },
   {
     name: "Popular",
-    endpoint: `https://api.themoviedb.org/3/movie/popular?language=en-US&api_key=${apiKey}`,
+    endpoint: "/movie/popular?language=en-US",
   },
   {
     name: "Top Rated",
-    endpoint: `https://api.themoviedb.org/3/movie/top_rated?language=en-US&api_key=${apiKey}`,
+    endpoint: "/movie/top_rated?language=en-US",
   },
 ];
 
 export function ExplorePage() {
   const { t } = useTranslation();
-  const [showBg, setShowBg] = useState<boolean>(false);
+  const [showBg] = useState<boolean>(false);
   const [genres, setGenres] = useState<Genre[]>([]);
   const [randomMovie, setRandomMovie] = useState<Movie | null>(null); // Add this line
   const [genreMovies, setGenreMovies] = useState<{
@@ -81,13 +79,12 @@ export function ExplorePage() {
         const movies: any[] = [];
         // eslint-disable-next-line no-plusplus
         for (let page = 1; page <= 3; page++) {
-          const response = await fetch(`${category.endpoint}&page=${page}`);
+          const data = await get<any>(category.endpoint, {
+            api_key: conf().TMDB_READ_API_KEY,
+            language: "en-US",
+            page: page.toString(),
+          });
 
-          if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-          }
-
-          const data = await response.json();
           movies.push(...data.results);
         }
         setCategoryMovies((prevCategoryMovies) => ({
@@ -101,7 +98,6 @@ export function ExplorePage() {
         );
       }
     };
-
     categories.forEach(fetchMoviesForCategory);
   }, []);
 
@@ -117,15 +113,11 @@ export function ExplorePage() {
   useEffect(() => {
     const fetchTVGenres = async () => {
       try {
-        const response = await fetch(
-          `https://api.themoviedb.org/3/genre/tv/list?api_key=${apiKey}`,
-        );
+        const data = await get<any>("/genre/tv/list", {
+          api_key: conf().TMDB_READ_API_KEY,
+          language: "en-US",
+        });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const data = await response.json();
         setTVGenres(data.genres);
       } catch (error) {
         console.error("Error fetching TV show genres:", error);
@@ -139,15 +131,12 @@ export function ExplorePage() {
   useEffect(() => {
     const fetchTVShowsForGenre = async (genreId: number) => {
       try {
-        const response = await fetch(
-          `https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&with_genres=${genreId}&language=en-US`,
-        );
+        const data = await get<any>("/discover/tv", {
+          api_key: conf().TMDB_READ_API_KEY,
+          with_genres: genreId.toString(),
+          language: "en-US",
+        });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const data = await response.json();
         setTVShowGenres((prevTVShowGenres) => ({
           ...prevTVShowGenres,
           [genreId]: data.results,
@@ -303,18 +292,15 @@ export function ExplorePage() {
     }, 5000);
   };
 
+  // Fetch Movie genres
   useEffect(() => {
     const fetchGenres = async () => {
       try {
-        const response = await fetch(
-          `https://api.themoviedb.org/3/genre/movie/list?api_key=${apiKey}`,
-        );
+        const data = await get<any>("/genre/movie/list", {
+          api_key: conf().TMDB_READ_API_KEY,
+          language: "en-US",
+        });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const data = await response.json();
         setGenres(data.genres);
       } catch (error) {
         console.error("Error fetching genres:", error);
@@ -324,18 +310,16 @@ export function ExplorePage() {
     fetchGenres();
   }, []);
 
+  // Fetch movies for each genre
   useEffect(() => {
     const fetchMoviesForGenre = async (genreId: number) => {
       try {
-        const response = await fetch(
-          `https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&with_genres=${genreId}&language=en-US`,
-        );
+        const data = await get<any>("/discover/movie", {
+          api_key: conf().TMDB_READ_API_KEY,
+          with_genres: genreId.toString(),
+          language: "en-US",
+        });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
-        const data = await response.json();
         setGenreMovies((prevGenreMovies) => ({
           ...prevGenreMovies,
           [genreId]: data.results,
@@ -383,7 +367,7 @@ export function ExplorePage() {
           <div className="flex items-center justify-center mt-6 mb-6">
             <button
               type="button"
-              className="flex items-center space-x-2 rounded-full px-4 text-white py-2 text-type-logo bg-pill-background bg-opacity-50 hover:bg-pill-backgroundHover transition-[background,transform] duration-100 hover:scale-105"
+              className="flex items-center space-x-2 rounded-full px-4 text-white py-2 bg-pill-background bg-opacity-50 hover:bg-pill-backgroundHover transition-[background,transform] duration-100 hover:scale-105"
               onClick={handleRandomMovieClick}
               disabled={countdown !== null && countdown > 0} // Disable the button during the countdown
             >
