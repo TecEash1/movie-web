@@ -17,6 +17,7 @@ import { AdminPage } from "@/pages/admin/AdminPage";
 import VideoTesterView from "@/pages/developer/VideoTesterView";
 import { DmcaPage, shouldHaveDmcaPage } from "@/pages/Dmca";
 import { NotFoundPage } from "@/pages/errors/NotFoundPage";
+import { ExplorePage } from "@/pages/Explore";
 import { HomePage } from "@/pages/HomePage";
 import { LoginPage } from "@/pages/Login";
 import { OnboardingPage } from "@/pages/onboarding/Onboarding";
@@ -132,7 +133,8 @@ function App() {
         {shouldHaveDmcaPage() ? (
           <Route path="/dmca" element={<DmcaPage />} />
         ) : null}
-
+        {/* Explore page */}
+        <Route path="/explore" element={<ExplorePage />} />
         {/* Settings page */}
         <Route
           path="/settings"
