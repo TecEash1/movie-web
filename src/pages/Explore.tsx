@@ -7,8 +7,6 @@ import { useNavigate } from "react-router-dom";
 import { ThinContainer } from "@/components/layout/ThinContainer";
 import { WideContainer } from "@/components/layout/WideContainer";
 import { HomeLayout } from "@/pages/layouts/HomeLayout";
-import { BookmarksPart } from "@/pages/parts/home/BookmarksPart";
-import { WatchingPart } from "@/pages/parts/home/WatchingPart";
 import { conf } from "@/setup/config";
 
 import { proxiedFetch } from "../backend/helpers/fetch";
@@ -49,15 +47,15 @@ interface Category {
 const categories: Category[] = [
   {
     name: "Now Playing",
-    endpoint: `https://api.themoviedb.org/3/movie/now_playing?language=en-US&page=1&api_key=${apiKey}`,
+    endpoint: `https://api.themoviedb.org/3/movie/now_playing?language=en-US&api_key=${apiKey}`,
   },
   {
     name: "Popular",
-    endpoint: `https://api.themoviedb.org/3/movie/popular?language=en-US&page=1&api_key=${apiKey}`,
+    endpoint: `https://api.themoviedb.org/3/movie/popular?language=en-US&api_key=${apiKey}`,
   },
   {
     name: "Top Rated",
-    endpoint: `https://api.themoviedb.org/3/movie/top_rated?language=en-US&page=1&api_key=${apiKey}`,
+    endpoint: `https://api.themoviedb.org/3/movie/top_rated?language=en-US&api_key=${apiKey}`,
   },
 ];
 
@@ -80,16 +78,21 @@ export function ExplorePage() {
   useEffect(() => {
     const fetchMoviesForCategory = async (category: Category) => {
       try {
-        const response = await fetch(category.endpoint);
+        const movies: any[] = [];
+        // eslint-disable-next-line no-plusplus
+        for (let page = 1; page <= 3; page++) {
+          const response = await fetch(`${category.endpoint}&page=${page}`);
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+
+          const data = await response.json();
+          movies.push(...data.results);
         }
-
-        const data = await response.json();
         setCategoryMovies((prevCategoryMovies) => ({
           ...prevCategoryMovies,
-          [category.name]: data.results,
+          [category.name]: movies,
         }));
       } catch (error) {
         console.error(
@@ -137,7 +140,7 @@ export function ExplorePage() {
     const fetchTVShowsForGenre = async (genreId: number) => {
       try {
         const response = await fetch(
-          `https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&with_genres=${genreId}`,
+          `https://api.themoviedb.org/3/discover/tv?api_key=${apiKey}&with_genres=${genreId}&language=en-US`,
         );
 
         if (!response.ok) {
@@ -325,7 +328,7 @@ export function ExplorePage() {
     const fetchMoviesForGenre = async (genreId: number) => {
       try {
         const response = await fetch(
-          `https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&with_genres=${genreId}`,
+          `https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&with_genres=${genreId}&language=en-US`,
         );
 
         if (!response.ok) {
@@ -377,8 +380,6 @@ export function ExplorePage() {
       </div>
       <WideContainer>
         <>
-          <BookmarksPart />
-          <WatchingPart />
           <div className="flex items-center justify-center mt-6 mb-6">
             <button
               type="button"
