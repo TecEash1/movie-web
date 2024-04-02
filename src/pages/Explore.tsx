@@ -1,8 +1,11 @@
+/* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable no-plusplus */
 /* eslint-disable react-hooks/rules-of-hooks */
 import React, { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useTranslation } from "react-i18next";
+import { LazyLoadImage } from "react-lazy-load-image-component";
+import "react-lazy-load-image-component/src/effects/blur.css";
 import { useNavigate } from "react-router-dom";
 
 import { ThinContainer } from "@/components/layout/ThinContainer";
@@ -235,14 +238,14 @@ export function ExplorePage() {
               className="block text-center relative overflow-hidden transition-transform transform hover:scale-105 mr-4"
               style={{ flex: "0 0 auto", width: movieWidth }} // Set a fixed width for each movie
             >
-              <img
+              <LazyLoadImage
                 src={`https://image.tmdb.org/t/p/w500${media.poster_path}`}
                 alt={isTVShow ? media.name : media.title}
+                effect="blur"
                 className="rounded-xl mb-2"
                 style={{
                   width: "100%",
-                  height: "auto", // Let the height adjust automatically based on the width
-                  opacity: 1,
+                  height: "auto",
                   transform: "scale(1)",
                   transition: "opacity 0.3s, transform 0.3s",
                 }}
