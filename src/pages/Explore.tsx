@@ -287,19 +287,34 @@ export function ExplorePage() {
     );
   }
 
+  const [countdownTimeout, setCountdownTimeout] =
+    useState<NodeJS.Timeout | null>(null);
+
   const handleRandomMovieClick = () => {
     const allMovies = Object.values(genreMovies).flat(); // Flatten all movie arrays
     const randomIndex = Math.floor(Math.random() * allMovies.length);
     const selectedMovie = allMovies[randomIndex];
     setRandomMovie(selectedMovie);
 
-    // Start a 5-second countdown
-    setCountdown(5);
+    if (countdown !== null && countdown > 0) {
+      // Clear the countdown interval
+      setCountdown(null);
+      if (countdownTimeout) {
+        clearTimeout(countdownTimeout);
+        setCountdownTimeout(null);
+        setRandomMovie(null);
+      }
+    } else {
+      setCountdown(5);
 
-    // Schedule navigation after 5 seconds
-    setTimeout(() => {
-      navigate(`/media/tmdb-movie-${selectedMovie.id}-${selectedMovie.title}`);
-    }, 5000);
+      // Schedule navigation after 5 seconds
+      const timeoutId = setTimeout(() => {
+        navigate(
+          `/media/tmdb-movie-${selectedMovie.id}-${selectedMovie.title}`,
+        );
+      }, 5000);
+      setCountdownTimeout(timeoutId);
+    }
   };
 
   // Fetch Movie genres
@@ -383,20 +398,36 @@ export function ExplorePage() {
               type="button"
               className="flex items-center space-x-2 rounded-full px-4 text-white py-2 bg-pill-background bg-opacity-50 hover:bg-pill-backgroundHover transition-[background,transform] duration-100 hover:scale-105"
               onClick={handleRandomMovieClick}
-              disabled={countdown !== null && countdown > 0} // Disable the button during the countdown
+              style={{ minWidth: "200px" }} // Add a minimum width
             >
-              <img
-                src="https://cdn-icons-png.flaticon.com/512/4058/4058790.png"
-                alt="Small Image"
-                style={{
-                  width: "20px", // Adjust the width as needed
-                  height: "20px", // Adjust the height as needed
-                  marginRight: "10px", // Add margin-right
-                }}
-              />
-              {countdown !== null && countdown > 0
-                ? `Playing in ${countdown} seconds`
-                : "Watch a Random Movie"}
+              <span className="flex items-center overflow-hidden flex-wrap-nowrap flex-row">
+                {countdown !== null && countdown > 0 ? (
+                  <div className="items-center inline-block overflow-hidden">
+                    <span className="whitespace-nowrap overflow-ellipsis overflow-hidden">
+                      Cancel Countdown ({countdown})
+                    </span>
+                    <Icon
+                      icon={Icons.X}
+                      className="text-2xl ml-[4.5px] mb-[-0.7px]"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <span className="whitespace-nowrap overflow-ellipsis overflow-hidden">
+                      Watch a Random Movie
+                    </span>
+                    <img
+                      src="https://cdn-icons-png.flaticon.com/512/4058/4058790.png"
+                      alt="Small Image"
+                      style={{
+                        width: "20px", // Adjust the width as needed
+                        height: "20px", // Adjust the height as needed
+                        marginLeft: "10px", // Add margin-left
+                      }}
+                    />
+                  </div>
+                )}
+              </span>
             </button>
           </div>
           {randomMovie && (
