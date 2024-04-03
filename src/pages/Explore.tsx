@@ -167,8 +167,13 @@ export function ExplorePage() {
   const carouselRef = useRef<HTMLDivElement>(null);
   const carouselRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const gradientRef = useRef<HTMLDivElement>(null);
+  const [carouselScrollPositions, setCarouselScrollPositions] = useState<{
+    [categorySlug: string]: number;
+  }>({});
+  const [isScrolling, setIsScrolling] = useState<{
+    [categorySlug: string]: boolean;
+  }>({});
 
-  // Update the scrollCarousel function to use the new ref map
   function scrollCarousel(categorySlug: string, direction: string) {
     const carousel = carouselRefs.current[categorySlug];
     if (carousel) {
@@ -177,11 +182,30 @@ export function ExplorePage() {
         const movieWidth = movieElements[0].offsetWidth;
         const visibleMovies = Math.floor(carousel.offsetWidth / movieWidth);
         const scrollAmount = movieWidth * visibleMovies;
-        if (direction === "left") {
-          carousel.scrollBy({ left: -scrollAmount, behavior: "smooth" });
-        } else {
-          carousel.scrollBy({ left: scrollAmount, behavior: "smooth" });
-        }
+        // Set the scrolling status to true
+        setIsScrolling((prevIsScrolling) => ({
+          ...prevIsScrolling,
+          [categorySlug]: true,
+        }));
+        new Promise((resolve) => {
+          if (direction === "left") {
+            carousel.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+          } else {
+            carousel.scrollBy({ left: scrollAmount, behavior: "smooth" });
+          }
+          // Resolve the promise after the scrolling animation has completed
+          setTimeout(resolve, 500); // Adjust the timeout duration as needed
+        }).then(() => {
+          // Update the scroll position and set the scrolling status to false
+          setCarouselScrollPositions((prevPositions) => ({
+            ...prevPositions,
+            [categorySlug]: carousel.scrollLeft,
+          }));
+          setIsScrolling((prevIsScrolling) => ({
+            ...prevIsScrolling,
+            [categorySlug]: false,
+          }));
+        });
       }
     }
   }
@@ -210,6 +234,15 @@ export function ExplorePage() {
     }
   }, [movieWidth]); // Added movieWidth to the dependency array
 
+  useEffect(() => {
+    const initialScrollPositions: { [categorySlug: string]: number } = {};
+    categories.forEach((category) => {
+      const categorySlug = category.name.toLowerCase().replace(/ /g, "-");
+      initialScrollPositions[categorySlug] = 0;
+    });
+    setCarouselScrollPositions(initialScrollPositions);
+  }, []);
+
   function renderMovies(medias: Media[], category: string, isTVShow = false) {
     const categorySlug = category.toLowerCase().replace(/ /g, "-"); // Convert the category to a slug
     const displayCategory =
@@ -230,6 +263,15 @@ export function ExplorePage() {
           className="flex whitespace-nowrap overflow-auto scroll-snap-x-mandatory pb-4 mt-4 pl-10"
           ref={(el) => {
             carouselRefs.current[categorySlug] = el;
+          }}
+          onScroll={(e) => {
+            const carousel = e.target as HTMLDivElement;
+            const scrollLeft = carousel.scrollLeft;
+            // Update the state immediately
+            setCarouselScrollPositions((prevPositions) => ({
+              ...prevPositions,
+              [categorySlug]: scrollLeft,
+            }));
           }}
         >
           {medias.slice(0, 100).map((media) => (
@@ -284,18 +326,50 @@ export function ExplorePage() {
           }}
         />
         <button
-          type="button" // Added type attribute with value "button"
-          className="absolute top-1/2 left-2 transform -translate-y-1/2 z-10"
+          type="button"
+          className="absolute top-1/2 left-2 transform -translate-y-1/2 z-10 transition-opacity duration-200"
           onClick={() => scrollCarousel(categorySlug, "left")}
+          style={{
+            opacity:
+              !isScrolling[categorySlug] &&
+              carouselScrollPositions[categorySlug] > 0
+                ? 1
+                : 0,
+            pointerEvents:
+              !isScrolling[categorySlug] &&
+              carouselScrollPositions[categorySlug] > 0
+                ? "auto"
+                : "none",
+          }} // Hide the button when the carousel is scrolling or the scroll position is 0
         >
-          <Icon icon={Icons.ARROW_LEFT} />
+          <div className="cursor-pointer text-white flex justify-center items-center h-10 w-10 rounded-full bg-search-hoverBackground active:scale-110 transition-[transform,background-color] duration-200">
+            <Icon icon={Icons.ARROW_LEFT} />
+          </div>
         </button>
         <button
-          type="button" // Added type attribute with value "button"
-          className="absolute top-1/2 right-2 transform -translate-y-1/2 z-10"
+          type="button"
+          className="absolute top-1/2 right-2 transform -translate-y-1/2 z-10 transition-opacity duration-200"
           onClick={() => scrollCarousel(categorySlug, "right")}
+          style={{
+            opacity:
+              !isScrolling[categorySlug] &&
+              carouselScrollPositions[categorySlug] <
+                (carouselRefs.current[categorySlug]?.scrollWidth ?? 0) -
+                  (carouselRefs.current[categorySlug]?.clientWidth ?? 0)
+                ? 1
+                : 0,
+            pointerEvents:
+              !isScrolling[categorySlug] &&
+              carouselScrollPositions[categorySlug] <
+                (carouselRefs.current[categorySlug]?.scrollWidth ?? 0) -
+                  (carouselRefs.current[categorySlug]?.clientWidth ?? 0)
+                ? "auto"
+                : "none",
+          }} // Hide the button when the carousel is scrolling or the scroll position is at the end
         >
-          <Icon icon={Icons.ARROW_RIGHT} />
+          <div className="cursor-pointer text-white flex justify-center items-center h-10 w-10 rounded-full bg-search-hoverBackground active:scale-110 transition-[transform,background-color] duration-200">
+            <Icon icon={Icons.ARROW_RIGHT} />
+          </div>
         </button>
       </div>
     );
@@ -458,6 +532,14 @@ export function ExplorePage() {
                   .toLowerCase()
                   .replace(/ /g, "-")}`}
                 className="mt-8"
+                onScroll={(e) => {
+                  const carousel = e.target as HTMLDivElement;
+                  // Update the state immediately
+                  setCarouselScrollPositions((prevPositions) => ({
+                    ...prevPositions,
+                    [category.name]: carousel.scrollLeft,
+                  }));
+                }}
               >
                 {renderMovies(
                   categoryMovies[category.name] || [],
@@ -470,6 +552,13 @@ export function ExplorePage() {
                 key={genre.id}
                 id={`carousel-${genre.name.toLowerCase().replace(/ /g, "-")}`}
                 className="mt-8"
+                onScroll={(e) => {
+                  const carousel = e.target as HTMLDivElement;
+                  setCarouselScrollPositions((prevPositions) => ({
+                    ...prevPositions,
+                    [genre.name]: carousel.scrollLeft,
+                  }));
+                }}
               >
                 {renderMovies(genreMovies[genre.id] || [], genre.name)}
               </div>
@@ -479,6 +568,13 @@ export function ExplorePage() {
                 key={genre.id}
                 id={`carousel-${genre.name.toLowerCase().replace(/ /g, "-")}`}
                 className="mt-8"
+                onScroll={(e) => {
+                  const carousel = e.target as HTMLDivElement;
+                  setCarouselScrollPositions((prevPositions) => ({
+                    ...prevPositions,
+                    [genre.name]: carousel.scrollLeft,
+                  }));
+                }}
               >
                 {renderMovies(tvShowGenres[genre.id] || [], genre.name, true)}
               </div>
