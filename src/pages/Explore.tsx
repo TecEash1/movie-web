@@ -255,7 +255,7 @@ export function ExplorePage() {
                 }}
               />
               <div
-                className="absolute inset-0 rounded-xl flex items-center justify-center text-white font-bold opacity-0 hover:opacity-100 transition-opacity"
+                className="absolute rounded-xl flex items-center justify-center text-white font-bold opacity-0 hover:opacity-100 transition-opacity"
                 style={{
                   backdropFilter: "blur(0px)",
                   transition: "opacity 0.5s",
