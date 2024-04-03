@@ -12,7 +12,9 @@ import { ThinContainer } from "@/components/layout/ThinContainer";
 import { WideContainer } from "@/components/layout/WideContainer";
 import { HomeLayout } from "@/pages/layouts/HomeLayout";
 import { conf } from "@/setup/config";
+import { useThemeStore } from "@/stores/theme";
 
+import { allThemes } from "../../themes/all";
 import { get } from "../backend/metadata/tmdb";
 import { Icon, Icons } from "../components/Icon";
 
@@ -73,7 +75,9 @@ export function ExplorePage() {
   }>({});
   const [countdown, setCountdown] = useState<number | null>(null);
   const navigate = useNavigate();
-
+  const themeName = useThemeStore((s) => s.theme);
+  const currentTheme = allThemes.find((y) => y.name === themeName);
+  const bgColor = currentTheme?.extend?.colors?.background?.main ?? "#0a0a12";
   // Add a new state variable for the category movies
   const [categoryMovies, setCategoryMovies] = useState<{
     [categoryName: string]: Movie[];
@@ -267,8 +271,18 @@ export function ExplorePage() {
             </a>
           ))}
         </div>
-        <div className="absolute top-10 bottom-10 left-0 w-10 bg-gradient-to-r from-black to-transparent" />
-        <div className="absolute top-10 bottom-10 right-0 w-10 bg-gradient-to-l from-black to-transparent" />
+        <div
+          className="absolute top-10 bottom-10 left-0 w-10"
+          style={{
+            background: `linear-gradient(90deg, ${bgColor} 0%, transparent 100%)`,
+          }}
+        />
+        <div
+          className="absolute top-10 bottom-10 right-0 w-10"
+          style={{
+            background: `linear-gradient(270deg, ${bgColor} 0%, transparent 100%)`,
+          }}
+        />
         <button
           type="button" // Added type attribute with value "button"
           className="absolute top-1/2 left-2 transform -translate-y-1/2 z-10"
