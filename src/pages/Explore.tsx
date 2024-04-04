@@ -4,8 +4,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { useTranslation } from "react-i18next";
-import { LazyLoadImage } from "react-lazy-load-image-component";
-import "react-lazy-load-image-component/src/effects/blur.css";
 import { useNavigate } from "react-router-dom";
 
 import { ThinContainer } from "@/components/layout/ThinContainer";
@@ -78,6 +76,8 @@ export function ExplorePage() {
   const themeName = useThemeStore((s) => s.theme);
   const currentTheme = allThemes.find((y) => y.name === themeName);
   const bgColor = currentTheme?.extend?.colors?.background?.main ?? "#0a0a12";
+  const accentColor =
+    currentTheme?.extend?.colors?.background?.accentA ?? "#7831BF";
   // Add a new state variable for the category movies
   const [categoryMovies, setCategoryMovies] = useState<{
     [categoryName: string]: Movie[];
@@ -234,6 +234,35 @@ export function ExplorePage() {
     }
   }, [movieWidth]); // Added movieWidth to the dependency array
 
+  function handleWheel(e: React.WheelEvent, categorySlug: string) {
+    const carousel = carouselRefs.current[categorySlug];
+    if (carousel) {
+      const movieElements = carousel.getElementsByTagName("a");
+      if (movieElements.length > 0) {
+        const posterWidth = movieElements[0].offsetWidth;
+        const visibleMovies = Math.floor(carousel.offsetWidth / posterWidth);
+        const scrollAmount = posterWidth * visibleMovies * 0.625;
+        if (e.deltaY < 5) {
+          carousel.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+        } else {
+          carousel.scrollBy({ left: scrollAmount, behavior: "smooth" });
+        }
+      }
+    }
+  }
+
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleMouseEnter = () => {
+    document.body.style.overflow = "hidden";
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    document.body.style.overflow = "auto";
+    setIsHovered(false);
+  };
+
   useEffect(() => {
     const initialScrollPositions: { [categorySlug: string]: number } = {};
     categories.forEach((category) => {
@@ -241,7 +270,16 @@ export function ExplorePage() {
       initialScrollPositions[categorySlug] = 0;
     });
     setCarouselScrollPositions(initialScrollPositions);
-  }, []);
+    genres.forEach((genre) => {
+      const genreSlug = genre.name.toLowerCase().replace(/ /g, "-");
+      initialScrollPositions[genreSlug] = 0;
+    });
+    tvGenres.forEach((genre) => {
+      const genreSlug = genre.name.toLowerCase().replace(/ /g, "-");
+      initialScrollPositions[genreSlug] = 0;
+    });
+    setCarouselScrollPositions(initialScrollPositions);
+  }, [genres, tvGenres]);
 
   function renderMovies(medias: Media[], category: string, isTVShow = false) {
     const categorySlug = category.toLowerCase().replace(/ /g, "-"); // Convert the category to a slug
@@ -254,13 +292,22 @@ export function ExplorePage() {
             ? `${category} Programmes`
             : `${category} Movies`;
     return (
-      <div className="relative overflow-hidden mt-4">
+      <div
+        className="relative overflow-hidden mt-4 rounded-xl"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onWheel={(e) => handleWheel(e, categorySlug)}
+      >
         <h2 className="text-2xl font-bold text-white sm:text-3xl md:text-2xl mx-auto pl-10">
           {displayCategory}
         </h2>
         <div
           id={`carousel-${categorySlug}`}
-          className="flex whitespace-nowrap overflow-auto scroll-snap-x-mandatory pb-4 mt-4 pl-10"
+          className="flex whitespace-nowrap overflow-auto scrollbar pb-6 mb-4 mt-4"
+          style={{
+            scrollbarWidth: "thin",
+            scrollbarColor: `${accentColor} transparent`,
+          }}
           ref={(el) => {
             carouselRefs.current[categorySlug] = el;
           }}
@@ -281,18 +328,17 @@ export function ExplorePage() {
                 isTVShow ? media.name : media.title
               }`}
               rel="noopener noreferrer"
-              className="block text-center relative overflow-hidden transition-transform transform hover:scale-105 mr-4"
+              className="block text-center relative overflow-hidden transition-transform transform hover:scale-90 mr-5"
               style={{ flex: "0 0 auto", width: movieWidth }} // Set a fixed width for each movie
             >
-              <LazyLoadImage
+              <img
                 src={`https://image.tmdb.org/t/p/w500${media.poster_path}`}
                 alt={isTVShow ? media.name : media.title}
-                effect="blur"
-                className="rounded-xl mb-2"
+                loading="lazy"
+                className="rounded-xl"
                 style={{
                   width: "100%",
                   height: "auto",
-                  transform: "scale(1)",
                   transition: "opacity 0.3s, transform 0.3s",
                 }}
               />
@@ -534,7 +580,6 @@ export function ExplorePage() {
                 className="mt-8"
                 onScroll={(e) => {
                   const carousel = e.target as HTMLDivElement;
-                  // Update the state immediately
                   setCarouselScrollPositions((prevPositions) => ({
                     ...prevPositions,
                     [category.name]: carousel.scrollLeft,
