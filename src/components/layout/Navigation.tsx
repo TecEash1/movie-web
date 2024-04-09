@@ -104,7 +104,7 @@ export function Navigation(props: NavigationProps) {
                 <IconPatch icon={Icons.GITHUB} clickable downsized />
               </a>
               <a
-                onClick={() => navigate("/explore")}
+                onClick={() => navigate("/discover")}
                 rel="noreferrer"
                 className="text-xl text-white tabbable rounded-full"
               >

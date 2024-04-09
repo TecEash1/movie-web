@@ -96,6 +96,7 @@
     "pages": {
       "about": "About",
       "dmca": "DMCA",
+      "discover": "Discover",
       "login": "Login",
       "onboarding": "Setup",
       "pagetitle": "{{title}} - movie-web",
