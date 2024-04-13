@@ -5,9 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { ThinContainer } from "@/components/layout/ThinContainer";
 import { WideContainer } from "@/components/layout/WideContainer";
 import { Divider } from "@/components/utils/Divider";
+import { Flare } from "@/components/utils/Flare";
 import { HomeLayout } from "@/pages/layouts/HomeLayout";
 import { conf } from "@/setup/config";
-import { useThemeStore } from "@/stores/theme";
 import {
   Category,
   Genre,
@@ -19,7 +19,6 @@ import {
 } from "@/utils/discover";
 
 import { PageTitle } from "./parts/util/PageTitle";
-import { allThemes } from "../../themes/all";
 import { get } from "../backend/metadata/tmdb";
 import { Icon, Icons } from "../components/Icon";
 
@@ -32,10 +31,6 @@ export function DiscoverPage() {
     [genreId: number]: Movie[];
   }>({});
   const [countdown, setCountdown] = useState<number | null>(null);
-  const themeName = useThemeStore((s) => s.theme);
-  const currentTheme = allThemes.find((y) => y.name === themeName);
-  const bgColor =
-    currentTheme?.extend?.colors?.background?.accentA ?? "#7831BF";
   const navigate = useNavigate();
   const [categoryShows, setCategoryShows] = useState<{
     [categoryName: string]: Movie[];
@@ -112,8 +107,8 @@ export function DiscoverPage() {
           [data.genres[i], data.genres[j]] = [data.genres[j], data.genres[i]];
         }
 
-        // Fetch only the first 6 TV show genres
-        setTVGenres(data.genres.slice(0, 6));
+        // Fetch only the first 5 TV show genres
+        setTVGenres(data.genres.slice(0, 5));
       } catch (error) {
         console.error("Error fetching TV show genres:", error);
       }
@@ -253,16 +248,17 @@ export function DiscoverPage() {
             ? `${category} Shows`
             : `${category} Movies`;
     return (
-      <div className="relative overflow-hidden mt-4 rounded-xl">
-        <h2 className="text-2xl font-bold text-white sm:text-3xl md:text-2xl mx-auto pl-2">
+      <div className="relative overflow-hidden mt-2">
+        <h2 className="text-2xl cursor-default font-bold text-white sm:text-3xl md:text-2xl mx-auto pl-6">
           {displayCategory}
         </h2>
         <div
           id={`carousel-${categorySlug}`}
-          className="flex whitespace-nowrap overflow-auto scrollbar pb-6 mb-4 mt-4 rounded-xl"
+          className="flex whitespace-nowrap pt-4 overflow-auto scrollbar rounded-xl overflow-y-hidden"
           style={{
             scrollbarWidth: "thin",
-            scrollbarColor: `${bgColor} transparent`,
+            // scrollbarColor: `${bgColor} transparent`,
+            scrollbarColor: "transparent transparent",
           }}
           ref={(el) => {
             carouselRefs.current[categorySlug] = el;
@@ -274,48 +270,67 @@ export function DiscoverPage() {
           {medias.slice(0, 20).map((media) => (
             <a
               key={media.id}
-              onClick={
-                () =>
-                  navigate(
-                    `/media/tmdb-${isTVShow ? "tv" : "movie"}-${media.id}-${
-                      isTVShow ? media.name : media.title
-                    }`,
-                  )
-                // Navigate instead of href!
+              onClick={() =>
+                navigate(
+                  `/media/tmdb-${isTVShow ? "tv" : "movie"}-${media.id}-${
+                    isTVShow ? media.name : media.title
+                  }`,
+                )
               }
-              rel="noopener noreferrer"
-              className="block rounded-xl text-center relative overflow-hidden transition-transform transform hover:scale-95 duration-500 mr-5"
+              className="text-center relative mt-3 ml-[0.285em] mb-3 mr-[0.2em]"
               style={{ flex: `0 0 ${movieWidth}` }} // Set a fixed width for each movie
             >
-              <img
-                src={`https://image.tmdb.org/t/p/w500${media.poster_path}`} // Dont change this fucking line!
-                alt={isTVShow ? media.name : media.title}
-                loading="lazy"
-                className="rounded-xl"
-              />
+              <div className="relative transition-transform hover:scale-105 duration-[0.45s]">
+                <Flare.Base className="group cursor-pointer rounded-xl relative p-[0.65em] bg-background-main transition-colors duration-300">
+                  <Flare.Light
+                    flareSize={300}
+                    cssColorVar="--colors-mediaCard-hoverAccent"
+                    backgroundClass="bg-mediaCard-hoverBackground duration-200"
+                    className="rounded-xl bg-background-main group-hover:opacity-100"
+                  />
+                  <img
+                    src={`https://image.tmdb.org/t/p/w500${media.poster_path}`}
+                    alt="failed to fetch :("
+                    loading="lazy"
+                    className="rounded-xl relative"
+                  />
+                  <h1 className="group relative pt-2 text-[13.5px] whitespace-normal duration-[0.35s] break-words font-semibold text-white opacity-0 group-hover:opacity-100">
+                    {isTVShow
+                      ? (media.name?.length ?? 0) > 36
+                        ? `${media.name?.slice(0, 36)}...`
+                        : media.name
+                      : (media.title?.length ?? 0) > 36
+                        ? `${media.title?.slice(0, 36)}...`
+                        : media.title}
+                  </h1>
+                </Flare.Base>
+              </div>
             </a>
           ))}
         </div>
-        <button
-          type="button"
-          title="Back"
-          className="absolute top-1/2 transform -translate-y-1/2 z-10 left-2"
-          onClick={() => scrollCarousel(categorySlug, "left")}
-        >
-          <div className="cursor-pointer text-white flex justify-center items-center h-10 w-10 rounded-full bg-search-hoverBackground active:scale-110 transition-[transform,background-color] duration-200">
-            <Icon icon={Icons.ARROW_LEFT} />
-          </div>
-        </button>
-        <button
-          type="button"
-          title="Next"
-          className="absolute top-1/2 right-2 transform -translate-y-1/2 z-10"
-          onClick={() => scrollCarousel(categorySlug, "right")}
-        >
-          <div className="cursor-pointer text-white flex justify-center items-center h-10 w-10 rounded-full bg-search-hoverBackground active:scale-110 transition-[transform,background-color] duration-200">
-            <Icon icon={Icons.ARROW_RIGHT} />
-          </div>
-        </button>
+
+        <div className="flex items-center justify-center">
+          <button
+            type="button"
+            title="Back"
+            className="absolute pb-2 left-5 top-1/2 transform -translate-y-3/4 z-10"
+            onClick={() => scrollCarousel(categorySlug, "left")}
+          >
+            <div className="cursor-pointer text-white flex justify-center items-center h-10 w-10 rounded-full bg-search-hoverBackground active:scale-110 transition-[transform,background-color] duration-200">
+              <Icon icon={Icons.ARROW_LEFT} />
+            </div>
+          </button>
+          <button
+            type="button"
+            title="Next"
+            className="absolute pb-2 right-5 top-1/2 transform -translate-y-3/4 z-10"
+            onClick={() => scrollCarousel(categorySlug, "right")}
+          >
+            <div className="cursor-pointer text-white flex justify-center items-center h-10 w-10 rounded-full bg-search-hoverBackground active:scale-110 transition-[transform,background-color] duration-200">
+              <Icon icon={Icons.ARROW_RIGHT} />
+            </div>
+          </button>
+        </div>
       </div>
     );
   }
@@ -370,8 +385,8 @@ export function DiscoverPage() {
           [data.genres[i], data.genres[j]] = [data.genres[j], data.genres[i]];
         }
 
-        // Fetch only the first 5 genres
-        setGenres(data.genres.slice(0, 5));
+        // Fetch only the first 4 genres
+        setGenres(data.genres.slice(0, 4));
       } catch (error) {
         console.error("Error fetching genres:", error);
       }
@@ -385,8 +400,8 @@ export function DiscoverPage() {
     const fetchMoviesForGenre = async (genreId: number) => {
       try {
         const movies: any[] = [];
-        for (let page = 1; page <= 6; page += 1) {
-          // Fetch only 6 pages
+        for (let page = 1; page <= 5; page += 1) {
+          // Fetch only 5 pages
           const data = await get<any>("/discover/movie", {
             api_key: conf().TMDB_READ_API_KEY,
             with_genres: genreId.toString(),
@@ -430,7 +445,7 @@ export function DiscoverPage() {
         <ThinContainer>
           <div className="mt-44 space-y-16 text-center">
             <div className="relative z-10 mb-16">
-              <h1 className="text-4xl font-bold text-white">
+              <h1 className="text-4xl cursor-default font-bold text-white">
                 {t("global.pages.discover")}
               </h1>
             </div>
@@ -502,7 +517,7 @@ export function DiscoverPage() {
                 {renderMovies(genreMovies[genre.id] || [], genre.name)}
               </div>
             ))}
-            <div className="flex items-center mt-6">
+            <div className="flex items-center">
               <Divider marginClass="mr-5" />
               <h1 className="text-4xl font-bold text-white mx-auto">Shows</h1>
               <Divider marginClass="ml-5" />
