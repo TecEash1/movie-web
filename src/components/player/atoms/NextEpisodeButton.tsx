@@ -1,21 +1,29 @@
 import classNames from "classnames";
-import React, { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { useAsync } from "react-use";
 
+import { getMetaFromId } from "@/backend/metadata/getmeta";
+import { MWMediaType, MWSeasonMeta } from "@/backend/metadata/types/mw";
 import { Icon, Icons } from "@/components/Icon";
 import { usePlayerMeta } from "@/components/player/hooks/usePlayerMeta";
 import { Transition } from "@/components/utils/Transition";
 import { PlayerMeta } from "@/stores/player/slices/source";
 import { usePlayerStore } from "@/stores/player/store";
+import { usePreferencesStore } from "@/stores/preferences";
+import { useProgressStore } from "@/stores/progress";
+import { isAutoplayAllowed } from "@/utils/autoplay";
+
+import { hasAired } from "../utils/aired";
 
 function shouldShowNextEpisodeButton(
   time: number,
   duration: number,
 ): "always" | "hover" | "none" {
+  const percentage = time / duration;
   const secondsFromEnd = duration - time;
-  if (secondsFromEnd <= 5) return "always"; // Show the buttons when the video has 5 seconds or less remaining
   if (secondsFromEnd <= 30) return "always";
-  if (time / duration >= 0.9) return "hover";
+  if (percentage >= 0.9) return "hover";
   return "none";
 }
 
@@ -38,6 +46,45 @@ function Button(props: {
   );
 }
 
+function useSeasons(mediaId: string, isLastEpisode: boolean = false) {
+  const state = useAsync(async () => {
+    if (isLastEpisode) {
+      const data = await getMetaFromId(MWMediaType.SERIES, mediaId ?? "");
+      if (data?.meta.type !== MWMediaType.SERIES) return null;
+      return data.meta.seasons;
+    }
+  }, [mediaId, isLastEpisode]);
+
+  return state;
+}
+
+function useNextSeasonEpisode(
+  nextSeason: MWSeasonMeta | undefined,
+  mediaId: string,
+) {
+  const state = useAsync(async () => {
+    if (nextSeason) {
+      const data = await getMetaFromId(
+        MWMediaType.SERIES,
+        mediaId ?? "",
+        nextSeason?.id,
+      );
+      if (data?.meta.type !== MWMediaType.SERIES) return null;
+
+      const nextSeasonEpisodes = data?.meta?.seasonData?.episodes
+        .filter((episode) => hasAired(episode.air_date))
+        .map((episode) => ({
+          number: episode.number,
+          title: episode.title,
+          tmdbId: episode.id,
+        }));
+
+      if (nextSeasonEpisodes.length > 0) return nextSeasonEpisodes[0];
+    }
+  }, [mediaId, nextSeason?.id]);
+  return state;
+}
+
 export function NextEpisodeButton(props: {
   controlsShowing: boolean;
   onChange?: (meta: PlayerMeta) => void;
@@ -47,6 +94,7 @@ export function NextEpisodeButton(props: {
   const isHidden = usePlayerStore((s) => s.interface.hideNextEpisodeBtn);
   const meta = usePlayerStore((s) => s.meta);
   const { setDirectMeta } = usePlayerMeta();
+  const hideNextEpisodeButton = usePlayerStore((s) => s.hideNextEpisodeButton);
   const metaType = usePlayerStore((s) => s.meta?.type);
   const time = usePlayerStore((s) => s.progress.time);
   const showingState = shouldShowNextEpisodeButton(time, duration);
@@ -54,48 +102,25 @@ export function NextEpisodeButton(props: {
   const setShouldStartFromBeginning = usePlayerStore(
     (s) => s.setShouldStartFromBeginning,
   );
-  const [autoplayCountdown, setAutoplayCountdown] = React.useState<
-    number | null
-  >(null);
-  const autoplay = usePlayerStore((s) => s.autoplay);
-  const [isAutoplayCancelled, setIsAutoplayCancelled] = React.useState(false);
+  const updateItem = useProgressStore((s) => s.updateItem);
+  const enableAutoplay = usePreferencesStore((s) => s.enableAutoplay);
 
-  const toggleAutoplay = useCallback(() => {
-    if (autoplayCountdown !== null) {
-      // Don't do anything if the countdown is happening
-      return;
-    }
-    if (isAutoplayCancelled) {
-      setIsAutoplayCancelled(false);
-      setAutoplayCountdown(5); // Restart the countdown when the cancel button is clicked
-    } else {
-      usePlayerStore.getState().toggleAutoplay();
-    }
-  }, [isAutoplayCancelled, autoplayCountdown]);
+  const isLastEpisode =
+    meta?.episode?.number === meta?.episodes?.at(-1)?.number;
 
-  const hideNextEpisodeButton = useCallback(() => {
-    if (duration - time <= 2) {
-      setIsAutoplayCancelled((prevIsAutoplayCancelled) => {
-        const newIsAutoplayCancelled = !prevIsAutoplayCancelled;
-        if (newIsAutoplayCancelled) {
-          setAutoplayCountdown(null); // Stop the countdown when the cancel button is clicked
-        } else {
-          setAutoplayCountdown(5); // Restart the countdown when the cancel button is clicked
-        }
-        return newIsAutoplayCancelled;
-      });
-    } else {
-      usePlayerStore.getState().hideNextEpisodeButton(); // Hide the buttons if the video has more than 5 seconds remaining
-    }
-  }, [duration, time]);
+  const seasons = useSeasons(meta?.tmdbId ?? "", isLastEpisode);
 
-  useEffect(() => {
-    if (duration - time <= 2 && !isAutoplayCancelled && autoplay) {
-      usePlayerStore.getState().showNextEpisodeButton(); // Show the buttons when there are 5 seconds remaining
-    }
-  }, [time, duration, isAutoplayCancelled, autoplay]);
+  const nextSeason = seasons.value?.find(
+    (season) => season.number === (meta?.season?.number ?? 0) + 1,
+  );
+
+  const nextSeasonEpisode = useNextSeasonEpisode(
+    nextSeason,
+    meta?.tmdbId ?? "",
+  );
 
   let show = false;
+  const hasAutoplayed = useRef(false);
   if (showingState === "always") show = true;
   else if (showingState === "hover" && props.controlsShowing) show = true;
   if (isHidden || status !== "playing" || duration === 0) show = false;
@@ -107,62 +132,53 @@ export function NextEpisodeButton(props: {
       ? bottom
       : "bottom-[calc(3rem+env(safe-area-inset-bottom))]";
 
-  const nextEp = meta?.episodes?.find(
-    (v) => v.number === (meta?.episode?.number ?? 0) + 1,
-  );
+  const nextEp = isLastEpisode
+    ? nextSeasonEpisode.value
+    : meta?.episodes?.find(
+        (v) => v.number === (meta?.episode?.number ?? 0) + 1,
+      );
 
   const loadNextEpisode = useCallback(() => {
     if (!meta || !nextEp) return;
     const metaCopy = { ...meta };
     metaCopy.episode = nextEp;
+    metaCopy.season =
+      isLastEpisode && nextSeason
+        ? {
+            ...nextSeason,
+            tmdbId: nextSeason.id,
+          }
+        : metaCopy.season;
     setShouldStartFromBeginning(true);
     setDirectMeta(metaCopy);
     props.onChange?.(metaCopy);
-  }, [setDirectMeta, nextEp, meta, props, setShouldStartFromBeginning]);
+    const defaultProgress = { duration: 0, watched: 0 };
+    updateItem({
+      meta: metaCopy,
+      progress: defaultProgress,
+    });
+  }, [
+    setDirectMeta,
+    nextEp,
+    meta,
+    props,
+    setShouldStartFromBeginning,
+    updateItem,
+    isLastEpisode,
+    nextSeason,
+  ]);
 
   useEffect(() => {
-    const hasVideoEnded = time >= duration - 2; // Consider a buffer of 2 seconds
-    if (
-      hasVideoEnded &&
-      showingState === "always" &&
-      !isHidden &&
-      status === "playing" &&
-      duration !== 0 &&
-      autoplay // Check if autoplay is enabled
-    ) {
-      setIsAutoplayCancelled(false); // Reset the isAutoplayCancelled state when the video has 5 seconds or less remaining
-      setAutoplayCountdown(5); // Set the countdown duration (in seconds)
-    } else if (time < duration - 2) {
-      setIsAutoplayCancelled(false); // Reset the isAutoplayCancelled state if the user rewinds the video to before the last 5 seconds
-      setAutoplayCountdown(null); // Reset the countdown if the user rewinds the video
+    if (!enableAutoplay || metaType !== "show") return;
+    const onePercent = duration / 100;
+    const isEnding = time >= duration - onePercent && duration !== 0;
+
+    if (duration === 0) hasAutoplayed.current = false;
+    if (isEnding && isAutoplayAllowed() && !hasAutoplayed.current) {
+      hasAutoplayed.current = true;
+      loadNextEpisode();
     }
-  }, [time, duration, showingState, isHidden, status, autoplay]);
-
-  useEffect(() => {
-    let countdownInterval: NodeJS.Timeout | null = null;
-
-    if (autoplayCountdown !== null) {
-      countdownInterval = setInterval(() => {
-        setAutoplayCountdown((prevCountdown) => {
-          if (prevCountdown === null) {
-            clearInterval(countdownInterval!);
-            return null;
-          }
-          if (prevCountdown === 1) {
-            loadNextEpisode();
-            return null;
-          }
-          return prevCountdown - 1;
-        });
-      }, 1000);
-    }
-
-    return () => {
-      if (countdownInterval !== null) {
-        clearInterval(countdownInterval);
-      }
-    };
-  }, [autoplayCountdown, loadNextEpisode]);
+  }, [duration, enableAutoplay, loadNextEpisode, metaType, time]);
 
   if (!meta?.episode || !nextEp) return null;
   if (metaType !== "show") return null;
@@ -179,30 +195,20 @@ export function NextEpisodeButton(props: {
           bottom,
         ])}
       >
-        {!isAutoplayCancelled && (
-          <Button
-            onClick={hideNextEpisodeButton}
-            className="py-px box-content bg-buttons-secondary hover:bg-buttons-secondaryHover bg-opacity-90 text-buttons-secondaryText"
-          >
-            Cancel
-          </Button>
-        )}
         <Button
-          onClick={toggleAutoplay}
           className="py-px box-content bg-buttons-secondary hover:bg-buttons-secondaryHover bg-opacity-90 text-buttons-secondaryText"
+          onClick={hideNextEpisodeButton}
         >
-          {autoplayCountdown !== null
-            ? `Playing in ${autoplayCountdown} sec`
-            : autoplay && !isAutoplayCancelled
-              ? "Autoplay On"
-              : "Autoplay Off"}
+          {t("player.nextEpisode.cancel")}
         </Button>
         <Button
           onClick={() => loadNextEpisode()}
           className="bg-buttons-primary hover:bg-buttons-primaryHover text-buttons-primaryText flex justify-center items-center"
         >
           <Icon className="text-xl mr-1" icon={Icons.SKIP_EPISODE} />
-          {t("player.nextEpisode.next")}
+          {isLastEpisode && nextEp
+            ? t("player.nextEpisode.nextSeason")
+            : t("player.nextEpisode.next")}
         </Button>
       </div>
     </Transition>
