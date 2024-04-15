@@ -272,8 +272,8 @@ export function SettingsPage() {
             setLanguage={state.appLanguage.set}
             enableThumbnails={state.enableThumbnails.state}
             setEnableThumbnails={state.enableThumbnails.set}
-            enableAutoplay={state.enableAutoplay.state}
-            setEnableAutoplay={state.enableAutoplay.set}
+            // enableAutoplay={state.enableAutoplay.state}
+            // setEnableAutoplay={state.enableAutoplay.set}
           />
         </div>
         <div id="settings-appearance" className="mt-48">

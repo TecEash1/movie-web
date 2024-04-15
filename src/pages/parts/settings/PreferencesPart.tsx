@@ -14,13 +14,13 @@ export function PreferencesPart(props: {
   setLanguage: (l: string) => void;
   enableThumbnails: boolean;
   setEnableThumbnails: (v: boolean) => void;
-  enableAutoplay: boolean;
-  setEnableAutoplay: (v: boolean) => void;
+  // enableAutoplay: boolean;
+  // setEnableAutoplay: (v: boolean) => void;
 }) {
   const { t } = useTranslation();
   const sorted = sortLangCodes(appLanguageOptions.map((item) => item.code));
 
-  const allowAutoplay = isAutoplayAllowed();
+  // const allowAutoplay = isAutoplayAllowed();
 
   const options = appLanguageOptions
     .sort((a, b) => sorted.indexOf(a.code) - sorted.indexOf(b.code))
@@ -68,7 +68,7 @@ export function PreferencesPart(props: {
           </p>
         </div>
       </div>
-      <div>
+      {/* <div>
         <p className="text-white font-bold mb-3">
           {t("settings.preferences.autoplay")}
         </p>
@@ -93,7 +93,7 @@ export function PreferencesPart(props: {
             {t("settings.preferences.autoplayLabel")}
           </p>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }
