@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 
