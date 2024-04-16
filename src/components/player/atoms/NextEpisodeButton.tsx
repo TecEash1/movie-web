@@ -210,12 +210,12 @@ export function NextEpisodeButton(props: {
       autoplay // Check if autoplay is enabled
     ) {
       setIsAutoplayCancelled(false); // Reset the isAutoplayCancelled state when the video has 5 seconds or less remaining
-      setAutoplayCountdown(5); // Set the countdown duration (in seconds)
+      setAutoplayCountdown(isLastEpisode ? 15 : 5); // Set the countdown duration (in seconds)
     } else if (time < duration - 2) {
       setIsAutoplayCancelled(false); // Reset the isAutoplayCancelled state if the user rewinds the video to before the last 5 seconds
       setAutoplayCountdown(null); // Reset the countdown if the user rewinds the video
     }
-  }, [time, duration, showingState, isHidden, status, autoplay]);
+  }, [time, duration, showingState, isHidden, status, autoplay, isLastEpisode]);
 
   useEffect(() => {
     let countdownInterval: NodeJS.Timeout | null = null;
