@@ -1,5 +1,7 @@
+import classNames from "classnames";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { useAsyncFn } from "react-use";
 
 import { searchForMedia } from "@/backend/metadata/search";
@@ -12,9 +14,30 @@ import { WatchedMediaCard } from "@/components/media/WatchedMediaCard";
 import { SearchLoadingPart } from "@/pages/parts/search/SearchLoadingPart";
 import { MediaItem } from "@/utils/mediaTypes";
 
+export function Button(props: {
+  className: string;
+  onClick?: () => void;
+  children: React.ReactNode;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      className={classNames(
+        "font-bold rounded h-10 w-40 scale-90 hover:scale-95 transition-all duration-200",
+        props.className,
+      )}
+      type="button"
+      onClick={props.onClick}
+      disabled={props.disabled}
+    >
+      {props.children}
+    </button>
+  );
+}
+
 function SearchSuffix(props: { failed?: boolean; results?: number }) {
   const { t } = useTranslation();
-
+  const navigate = useNavigate();
   const icon: Icons = props.failed ? Icons.WARNING : Icons.EYE_SLASH;
 
   return (
@@ -30,7 +53,15 @@ function SearchSuffix(props: { failed?: boolean; results?: number }) {
       {!props.failed ? (
         <div>
           {(props.results ?? 0) > 0 ? (
-            <p>{t("home.search.allResults")}</p>
+            <>
+              <p>{t("home.search.allResults")}</p>
+              <Button
+                className="px-py p-[0.3em] mt-3 text-type-dimmed box-content text-[17px] bg-largeCard-background text-buttons-secondaryText justify-center items-center"
+                onClick={() => navigate("/discover")}
+              >
+                Discover more
+              </Button>
+            </>
           ) : (
             <p>{t("home.search.noResults")}</p>
           )}
