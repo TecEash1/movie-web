@@ -23,7 +23,7 @@ dependencies:
     version: 1.0.3
   '@movie-web/providers':
     specifier: github:teceash1/mw-providers
-    version: github.com/teceash1/mw-providers/d26fb59d4fda2ac4c062d4fdaa58a1119f158614
+    version: github.com/teceash1/mw-providers/559e7da23ccfe00dfbe0c2bf71fe0b079b22f135
   '@noble/hashes':
     specifier: ^1.3.3
     version: 1.3.3
@@ -9276,10 +9276,11 @@ packages:
       use-sync-external-store: 1.2.0(react@18.2.0)
     dev: false
 
-  github.com/teceash1/mw-providers/d26fb59d4fda2ac4c062d4fdaa58a1119f158614:
-    resolution: {tarball: https://codeload.github.com/teceash1/mw-providers/tar.gz/d26fb59d4fda2ac4c062d4fdaa58a1119f158614}
+  github.com/teceash1/mw-providers/559e7da23ccfe00dfbe0c2bf71fe0b079b22f135:
+    resolution: {tarball: https://codeload.github.com/teceash1/mw-providers/tar.gz/559e7da23ccfe00dfbe0c2bf71fe0b079b22f135}
     name: '@movie-web/providers'
     version: 2.3.0
+    prepare: true
     requiresBuild: true
     dependencies:
       cheerio: 1.0.0-rc.12
