@@ -118,10 +118,8 @@ export function NextEpisodeButton(props: {
     (season) => season.number === (meta?.season?.number ?? 0) + 1,
   );
 
-  const nextSeasonEpisode = useNextSeasonEpisode(
-    nextSeason,
-    meta?.tmdbId ?? "",
-  );
+  const nextSeasonEpisode = useNextSeasonEpisode(nextSeason, meta?.tmdbId);
+
   const [autoplayCountdown, setAutoplayCountdown] = React.useState<
     number | null
   >(null);
