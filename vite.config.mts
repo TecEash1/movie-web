@@ -69,7 +69,7 @@ export default defineConfig(({ mode }) => {
         manifest: {
           name: "movie-web",
           short_name: "movie-web",
-          description: "The place for your favourite movies & shows",
+          description: "Watch your favorite shows and movies for free with no ads ever! (っ'ヮ'c)",
           theme_color: "#120f1d",
           background_color: "#120f1d",
           display: "standalone",

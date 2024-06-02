@@ -138,15 +138,11 @@
       },
       "morning": {
         "default": "¿Qué te gustaría ver esta mañana?",
-        "extra": [
-          "Escuché que “Antes del amanecer” es buena"
-        ]
+        "extra": ["Escuché que “Antes del amanecer” es buena"]
       },
       "night": {
         "default": "¿Qué te gustaría ver esta noche?",
-        "extra": [
-          "¿Cansado? Escuché que “El Exorcista” es buena."
-        ]
+        "extra": ["¿Cansado? Escuché que “El Exorcista” es buena."]
       }
     }
   },
@@ -163,7 +159,6 @@
     },
     "menu": {
       "about": "Acerca de nosotros",
-      "donation": "Donar",
       "logout": "Cerrar sesión",
       "register": "Sincronizar con la nube",
       "settings": "Configuración",

@@ -118,7 +118,7 @@ export function ScrapeErrorPart(props: ScrapeErrorPartProps) {
             {t("player.scraping.notFound.homeButton")}
           </Button>
           <Button
-            onClick={() => navigate("/Discover")}
+            onClick={() => navigate("/discover")}
             theme="secondary"
             padding="md:px-12 p-2.5"
             className="mt-6"

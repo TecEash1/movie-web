@@ -138,15 +138,11 @@
       },
       "morning": {
         "default": "La ce dorești să te in uiți dimineață aceasta?",
-        "extra": [
-          "Aud că Before Sunrise este bun"
-        ]
+        "extra": ["Aud că Before Sunrise este bun"]
       },
       "night": {
         "default": "La ce dorești să te uiți în astă seară?",
-        "extra": [
-          "Obosit? Aud că The Exorcist is good."
-        ]
+        "extra": ["Obosit? Aud că The Exorcist is good."]
       }
     }
   },
@@ -163,7 +159,6 @@
     },
     "menu": {
       "about": "Despre noi",
-      "donation": "Donează",
       "logout": "Deconectați-vă",
       "register": "Sincronizare în cloud",
       "settings": "Setări",
@@ -253,7 +248,7 @@
     "menus": {
       "downloads": {
         "copyHlsPlaylist": "Copiere link către lista de redare HLS",
-        "disclaimer": "Descărcările sunt luate direct de la furnizor. Movie-web nu are control cum descărcările sunt furnizate.",
+        "disclaimer": "Descărcările sunt luate direct de la furnizor. movie-web nu are control cum descărcările sunt furnizate.",
         "downloadSubtitle": "Descărcați subtitlul curente",
         "downloadVideo": "Descarcă video",
         "hlsDisclaimer": "Descărcările sunt preluate direct de la furnizor. movie-web nu are control asupra modului în care sunt furnizate descărcările.<br /><br />Vă rugăm să rețineți că descărcați o listă de redare HLS, <bold>nu este recomandat să o descărcați dacă nu sunteți familiari cu formate avasate de streaming</bold>. Încercați surse diferite pentru formate diferte.",

@@ -137,16 +137,12 @@
         ]
       },
       "morning": {
-        "default": "Apa yang ingin Anda tonton pagi ini?",
-        "extra": [
-          "Saya dengar film Before Sunrise bagus"
-        ]
+        "default": "Apa yang ingin anda tonton pagi ini?",
+        "extra": ["Kayaknya film Before Sunrise bagus deh"]
       },
       "night": {
         "default": "Apa yang ingin Anda tonton malam ini?",
-        "extra": [
-          "Capek? Saya dengar The Exocist bagus."
-        ]
+        "extra": ["Capek? Saya dengar The Exocist bagus."]
       }
     }
   },
@@ -164,7 +160,6 @@
     },
     "menu": {
       "about": "Tentang kami",
-      "donation": "Donasi",
       "logout": "Keluar",
       "register": "Sinkronkan ke cloud",
       "settings": "Pengaturan",

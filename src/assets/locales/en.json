@@ -162,6 +162,7 @@
     "menu": {
       "about": "About us",
       "donation": "Donate",
+      "discover": "Discover",
       "logout": "Log out",
       "register": "Sync to cloud",
       "settings": "Settings",
@@ -392,7 +393,7 @@
         "detailsButton": "Show details",
         "reloadButton": "Try again",
         "homeButton": "Go home",
-        "discoverButton": "Discover more",
+        "discoverButton": "Discover More",
         "text": "We have searched through our providers and cannot find the media you are looking for! We do not host the media and have no control over what is available. Please click 'Show details' below for more details.",
         "text2": "We have searched through our providers and cannot find the media you are looking for! We do not host the media and have no control over what is available. Please click 'Show details' below for more details... <bold>Did you enable the extension for this site?</bold>",
         "title": "We couldn't find that"
@@ -443,6 +444,11 @@
         "deviceNamePlaceholder": "Personal phone",
         "editProfile": "Edit",
         "logoutButton": "Log out"
+      },
+      "admin": {
+        "title": "Admin panel",
+        "text": "Utilize tools made for testing movie-web's condition.",
+        "button": "Check it out"
       },
       "actions": {
         "delete": {
@@ -557,7 +563,8 @@
       "colorLabel": "Color",
       "previewQuote": "I must not fear. Fear is the mind-killer.",
       "textSizeLabel": "Text size",
-      "title": "Subtitles"
+      "title": "Subtitles",
+      "textBoldLabel": "Bold text"
     },
     "unsaved": "You have unsaved changes"
   }

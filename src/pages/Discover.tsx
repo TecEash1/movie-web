@@ -1,12 +1,13 @@
-import React, { useEffect, useRef, useState } from "react";
+// Based mfs only use only one 500 line file instead of ten 50 line files.
+import { useEffect, useRef, useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
-import { ThinContainer } from "@/components/layout/ThinContainer";
-import { WideContainer } from "@/components/layout/WideContainer";
+import { get } from "@/backend/metadata/tmdb";
+import { ThiccContainer } from "@/components/layout/ThinContainer";
 import { Divider } from "@/components/utils/Divider";
 import { Flare } from "@/components/utils/Flare";
-import { HomeLayout } from "@/pages/layouts/HomeLayout";
 import { conf } from "@/setup/config";
 import {
   Category,
@@ -18,13 +19,12 @@ import {
   tvCategories,
 } from "@/utils/discover";
 
+import { SubPageLayout } from "./layouts/SubPageLayout";
 import { PageTitle } from "./parts/util/PageTitle";
-import { get } from "../backend/metadata/tmdb";
 import { Icon, Icons } from "../components/Icon";
 
-export function DiscoverPage() {
+export function Discover() {
   const { t } = useTranslation();
-  const [showBg] = useState<boolean>(false);
   const [genres, setGenres] = useState<Genre[]>([]);
   const [randomMovie, setRandomMovie] = useState<Movie | null>(null);
   const [genreMovies, setGenreMovies] = useState<{
@@ -56,6 +56,15 @@ export function DiscoverPage() {
           language: "en-US",
         });
 
+        // Shuffle the movies
+        for (let i = data.results.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [data.results[i], data.results[j]] = [
+            data.results[j],
+            data.results[i],
+          ];
+        }
+
         setCategoryMovies((prevCategoryMovies) => ({
           ...prevCategoryMovies,
           [category.name]: data.results,
@@ -77,6 +86,15 @@ export function DiscoverPage() {
           api_key: conf().TMDB_READ_API_KEY,
           language: "en-US",
         });
+
+        // Shuffle the TV shows
+        for (let i = data.results.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [data.results[i], data.results[j]] = [
+            data.results[j],
+            data.results[i],
+          ];
+        }
 
         setCategoryShows((prevCategoryShows) => ({
           ...prevCategoryShows,
@@ -107,8 +125,8 @@ export function DiscoverPage() {
           [data.genres[i], data.genres[j]] = [data.genres[j], data.genres[i]];
         }
 
-        // Fetch only the first 5 TV show genres
-        setTVGenres(data.genres.slice(0, 5));
+        // Fetch only the first 6 TV show genres
+        setTVGenres(data.genres.slice(0, 6));
       } catch (error) {
         console.error("Error fetching TV show genres:", error);
       }
@@ -126,6 +144,16 @@ export function DiscoverPage() {
           with_genres: genreId.toString(),
           language: "en-US",
         });
+
+        // Shuffle the TV shows
+        for (let i = data.results.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [data.results[i], data.results[j]] = [
+            data.results[j],
+            data.results[i],
+          ];
+        }
+
         setTVShowGenres((prevTVShowGenres) => ({
           ...prevTVShowGenres,
           [genreId]: data.results,
@@ -138,6 +166,66 @@ export function DiscoverPage() {
     tvGenres.forEach((genre) => fetchTVShowsForGenre(genre.id));
   }, [tvGenres]);
 
+  // Fetch Movie genres
+  useEffect(() => {
+    const fetchGenres = async () => {
+      try {
+        const data = await get<any>("/genre/movie/list", {
+          api_key: conf().TMDB_READ_API_KEY,
+          language: "en-US",
+        });
+
+        // Shuffle the array of genres
+        for (let i = data.genres.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [data.genres[i], data.genres[j]] = [data.genres[j], data.genres[i]];
+        }
+
+        // Fetch only the first 4 genres
+        setGenres(data.genres.slice(0, 4));
+      } catch (error) {
+        console.error("Error fetching genres:", error);
+      }
+    };
+
+    fetchGenres();
+  }, []);
+
+  // Fetch movies for each genre
+  useEffect(() => {
+    const fetchMoviesForGenre = async (genreId: number) => {
+      try {
+        const movies: any[] = [];
+        for (let page = 1; page <= 6; page += 1) {
+          // Fetch only 6 pages
+          const data = await get<any>("/discover/movie", {
+            api_key: conf().TMDB_READ_API_KEY,
+            with_genres: genreId.toString(),
+            language: "en-US",
+            page: page.toString(),
+          });
+
+          movies.push(...data.results);
+        }
+
+        // Shuffle the movies
+        for (let i = movies.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [movies[i], movies[j]] = [movies[j], movies[i]];
+        }
+
+        setGenreMovies((prevGenreMovies) => ({
+          ...prevGenreMovies,
+          [genreId]: movies,
+        }));
+      } catch (error) {
+        console.error(`Error fetching movies for genre ${genreId}:`, error);
+      }
+    };
+
+    genres.forEach((genre) => fetchMoviesForGenre(genre.id));
+  }, [genres]);
+
   // Update the scrollCarousel function to use the new ref map
   function scrollCarousel(categorySlug: string, direction: string) {
     const carousel = carouselRefs.current[categorySlug];
@@ -147,6 +235,7 @@ export function DiscoverPage() {
         const movieWidth = movieElements[0].offsetWidth;
         const visibleMovies = Math.floor(carousel.offsetWidth / movieWidth);
         const scrollAmount = movieWidth * visibleMovies * 0.69; // Silly number :3
+
         if (direction === "left") {
           if (carousel.scrollLeft <= 5) {
             carousel.scrollBy({
@@ -204,12 +293,12 @@ export function DiscoverPage() {
     isScrolling = true;
 
     const carousel = carouselRefs.current[categorySlug];
-    if (carousel) {
+    if (carousel && !e.deltaX) {
       const movieElements = carousel.getElementsByTagName("a");
       if (movieElements.length > 0) {
         const posterWidth = movieElements[0].offsetWidth;
         const visibleMovies = Math.floor(carousel.offsetWidth / posterWidth);
-        const scrollAmount = posterWidth * visibleMovies * 0.6;
+        const scrollAmount = posterWidth * visibleMovies * 0.62;
         if (e.deltaY < 5) {
           carousel.scrollBy({ left: -scrollAmount, behavior: "smooth" });
         } else {
@@ -225,20 +314,23 @@ export function DiscoverPage() {
 
   const [isHovered, setIsHovered] = useState(false);
 
+  useEffect(() => {
+    if (!isHovered) {
+      document.body.style.overflow = "auto";
+    }
+  }, [isHovered]);
+
   const handleMouseEnter = () => {
     document.body.style.overflow = "hidden";
     setIsHovered(true);
   };
 
   const handleMouseLeave = () => {
-    document.body.style.overflow = "auto";
     setIsHovered(false);
   };
 
   function renderMovies(medias: Media[], category: string, isTVShow = false) {
-    const categorySlug = `${category
-      .toLowerCase()
-      .replace(/ /g, "-")}${Math.random()}`; // Convert the category to a slug
+    const categorySlug = `${category.toLowerCase().replace(/ /g, "-")}${Math.random()}`; // Convert the category to a slug
     const displayCategory =
       category === "Now Playing"
         ? "In Cinemas"
@@ -247,9 +339,11 @@ export function DiscoverPage() {
           : isTVShow
             ? `${category} Shows`
             : `${category} Movies`;
+
+    // https://tailwindcss.com/docs/border-style
     return (
       <div className="relative overflow-hidden mt-2">
-        <h2 className="text-2xl cursor-default font-bold text-white sm:text-3xl md:text-2xl mx-auto pl-6">
+        <h2 className="text-2xl cursor-default font-bold text-white sm:text-3xl md:text-2xl mx-auto pl-5">
           {displayCategory}
         </h2>
         <div
@@ -267,21 +361,30 @@ export function DiscoverPage() {
           onMouseLeave={handleMouseLeave}
           onWheel={(e) => handleWheel(e, categorySlug)}
         >
-          {medias.slice(0, 20).map((media) => (
-            <a
-              key={media.id}
-              onClick={() =>
-                navigate(
-                  `/media/tmdb-${isTVShow ? "tv" : "movie"}-${media.id}-${
-                    isTVShow ? media.name : media.title
-                  }`,
+          {medias
+            .filter((media, index, self) => {
+              return (
+                index ===
+                self.findIndex(
+                  (m) => m.id === media.id && m.title === media.title,
                 )
-              }
-              className="text-center relative mt-3 ml-[0.285em] mb-3 mr-[0.2em]"
-              style={{ flex: `0 0 ${movieWidth}` }} // Set a fixed width for each movie
-            >
-              <div className="relative transition-transform hover:scale-105 duration-[0.45s]">
-                <Flare.Base className="group cursor-pointer rounded-xl relative p-[0.65em] bg-background-main transition-colors duration-300">
+              );
+            })
+            .slice(0, 20)
+            .map((media) => (
+              <a
+                key={media.id}
+                onClick={() =>
+                  navigate(
+                    `/media/tmdb-${isTVShow ? "tv" : "movie"}-${media.id}-${
+                      isTVShow ? media.name : media.title
+                    }`,
+                  )
+                }
+                className="text-center relative mt-3 mx-[0.285em] mb-3 transition-transform hover:scale-105 duration-[0.45s]"
+                style={{ flex: `0 0 ${movieWidth}` }} // Set a fixed width for each movie
+              >
+                <Flare.Base className="group cursor-pointer rounded-xl relative p-[0.65em] bg-background-main transition-colors duration-300 bg-transparent">
                   <Flare.Light
                     flareSize={300}
                     cssColorVar="--colors-mediaCard-hoverAccent"
@@ -289,31 +392,34 @@ export function DiscoverPage() {
                     className="rounded-xl bg-background-main group-hover:opacity-100"
                   />
                   <img
-                    src={`https://image.tmdb.org/t/p/w500${media.poster_path}`}
-                    alt="failed to fetch :("
+                    src={
+                      media.poster_path
+                        ? `https://image.tmdb.org/t/p/w500${media.poster_path}`
+                        : "/placeholder.png"
+                    }
+                    alt={media.poster_path ? "" : "failed to fetch :("}
                     loading="lazy"
                     className="rounded-xl relative"
                   />
-                  <h1 className="group relative pt-2 text-[13.5px] whitespace-normal duration-[0.35s] break-words font-semibold text-white opacity-0 group-hover:opacity-100">
+                  <h1 className="group relative pt-2 text-[13.5px] whitespace-normal duration-[0.35s] font-semibold text-white opacity-0 group-hover:opacity-100">
                     {isTVShow
-                      ? (media.name?.length ?? 0) > 36
-                        ? `${media.name?.slice(0, 36)}...`
+                      ? (media.name?.length ?? 0) > 32
+                        ? `${media.name?.slice(0, 32)}...`
                         : media.name
-                      : (media.title?.length ?? 0) > 36
-                        ? `${media.title?.slice(0, 36)}...`
+                      : (media.title?.length ?? 0) > 32
+                        ? `${media.title?.slice(0, 32)}...`
                         : media.title}
                   </h1>
                 </Flare.Base>
-              </div>
-            </a>
-          ))}
+              </a>
+            ))}
         </div>
 
         <div className="flex items-center justify-center">
           <button
             type="button"
             title="Back"
-            className="absolute pb-2 left-5 top-1/2 transform -translate-y-3/4 z-10"
+            className="absolute left-5 top-1/2 transform -translate-y-3/4 z-10"
             onClick={() => scrollCarousel(categorySlug, "left")}
           >
             <div className="cursor-pointer text-white flex justify-center items-center h-10 w-10 rounded-full bg-search-hoverBackground active:scale-110 transition-[transform,background-color] duration-200">
@@ -323,7 +429,7 @@ export function DiscoverPage() {
           <button
             type="button"
             title="Next"
-            className="absolute pb-2 right-5 top-1/2 transform -translate-y-3/4 z-10"
+            className="absolute right-5 top-1/2 transform -translate-y-3/4 z-10"
             onClick={() => scrollCarousel(categorySlug, "right")}
           >
             <div className="cursor-pointer text-white flex justify-center items-center h-10 w-10 rounded-full bg-search-hoverBackground active:scale-110 transition-[transform,background-color] duration-200">
@@ -370,59 +476,6 @@ export function DiscoverPage() {
     }
   };
 
-  // Fetch Movie genres
-  useEffect(() => {
-    const fetchGenres = async () => {
-      try {
-        const data = await get<any>("/genre/movie/list", {
-          api_key: conf().TMDB_READ_API_KEY,
-          language: "en-US",
-        });
-
-        // Shuffle the array of genres
-        for (let i = data.genres.length - 1; i > 0; i -= 1) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [data.genres[i], data.genres[j]] = [data.genres[j], data.genres[i]];
-        }
-
-        // Fetch only the first 4 genres
-        setGenres(data.genres.slice(0, 4));
-      } catch (error) {
-        console.error("Error fetching genres:", error);
-      }
-    };
-
-    fetchGenres();
-  }, []);
-
-  // Fetch movies for each genre
-  useEffect(() => {
-    const fetchMoviesForGenre = async (genreId: number) => {
-      try {
-        const movies: any[] = [];
-        for (let page = 1; page <= 5; page += 1) {
-          // Fetch only 5 pages
-          const data = await get<any>("/discover/movie", {
-            api_key: conf().TMDB_READ_API_KEY,
-            with_genres: genreId.toString(),
-            language: "en-US",
-            page: page.toString(),
-          });
-
-          movies.push(...data.results);
-        }
-        setGenreMovies((prevGenreMovies) => ({
-          ...prevGenreMovies,
-          [genreId]: movies,
-        }));
-      } catch (error) {
-        console.error(`Error fetching movies for genre ${genreId}:`, error);
-      }
-    };
-
-    genres.forEach((genre) => fetchMoviesForGenre(genre.id));
-  }, [genres]);
-
   useEffect(() => {
     let countdownInterval: NodeJS.Timeout;
     if (countdown !== null && countdown > 0) {
@@ -439,116 +492,113 @@ export function DiscoverPage() {
   }, [countdown]);
 
   return (
-    <HomeLayout showBg={showBg}>
+    <SubPageLayout>
       <div className="mb-16 sm:mb-2">
+        <Helmet>
+          {/* Hide scrollbar lmao */}
+          <style type="text/css">{`
+            html, body {
+              scrollbar-width: none;
+              -ms-overflow-style: none;
+            }
+          `}</style>
+        </Helmet>
         <PageTitle subpage k="global.pages.discover" />
-        <ThinContainer>
-          <div className="mt-44 space-y-16 text-center">
-            <div className="relative z-10 mb-16">
-              <h1 className="text-4xl cursor-default font-bold text-white">
-                {t("global.pages.discover")}
-              </h1>
-            </div>
+        <div className="mt-44 space-y-16 text-center">
+          <div className="relative z-10 mb-16">
+            <h1 className="text-4xl cursor-default font-bold text-white">
+              {t("global.pages.discover")}
+            </h1>
           </div>
-        </ThinContainer>
+        </div>
       </div>
-      <WideContainer>
-        <>
-          <div className="flex items-center justify-center mb-6">
-            <button
-              type="button"
-              className="flex items-center space-x-2 rounded-full px-4 text-white py-2 bg-pill-background bg-opacity-50 hover:bg-pill-backgroundHover transition-[background,transform] duration-100 hover:scale-105"
-              onClick={handleRandomMovieClick}
+      <ThiccContainer>
+        <div className="flex items-center justify-center mb-6">
+          <button
+            type="button"
+            className="flex items-center space-x-2 rounded-full px-4 text-white py-2 bg-pill-background bg-opacity-50 hover:bg-pill-backgroundHover transition-[background,transform] duration-100 hover:scale-105"
+            onClick={handleRandomMovieClick}
+          >
+            <span className="flex items-center">
+              {countdown !== null && countdown > 0 ? (
+                <div className="flex items-center inline-block">
+                  <span>Cancel Countdown</span>
+                  <Icon
+                    icon={Icons.X}
+                    className="text-2xl ml-[4.5px] mb-[-0.7px]"
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center inline-block">
+                  <span>Watch Something New</span>
+                  <img
+                    src="/lightbar-images/dice.svg"
+                    alt="Small Image"
+                    style={{
+                      marginLeft: "8px",
+                    }}
+                  />
+                </div>
+              )}
+            </span>
+          </button>
+        </div>
+        {randomMovie && (
+          <div className="mt-4 mb-4 text-center">
+            <p>
+              Now Playing <span className="font-bold">{randomMovie.title}</span>{" "}
+              in {countdown}
+            </p>
+          </div>
+        )}
+        <div className="flex flex-col">
+          {categories.map((category) => (
+            <div
+              key={category.name}
+              id={`carousel-${category.name.toLowerCase().replace(/ /g, "-")}`}
+              className="mt-8"
             >
-              <span className="flex items-center">
-                {countdown !== null && countdown > 0 ? (
-                  <div className="flex items-center inline-block">
-                    <span>Cancel Countdown</span>
-                    <Icon
-                      icon={Icons.X}
-                      className="text-2xl ml-[4.5px] mb-[-0.7px]"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex items-center inline-block">
-                    <span>Watch Something New</span>
-                    <img
-                      src="https://raw.githubusercontent.com/sussy-code/smov/main/public/lightbar-images/dice.svg"
-                      alt="Small Image"
-                      style={{
-                        marginLeft: "8px",
-                      }}
-                    />
-                  </div>
-                )}
-              </span>
-            </button>
-          </div>
-          {randomMovie && (
-            <div className="mt-4 mb-4 text-center">
-              <p>
-                Now Playing{" "}
-                <span className="font-bold">{randomMovie.title}</span> in{" "}
-                {countdown}
-              </p>
+              {renderMovies(categoryMovies[category.name] || [], category.name)}
             </div>
-          )}
-          <div className="flex flex-col">
-            {categories.map((category) => (
-              <div
-                key={category.name}
-                id={`carousel-${category.name
-                  .toLowerCase()
-                  .replace(/ /g, "-")}`}
-                className="mt-8"
-              >
-                {renderMovies(
-                  categoryMovies[category.name] || [],
-                  category.name,
-                )}
-              </div>
-            ))}
-            {genres.map((genre) => (
-              <div
-                key={genre.id}
-                id={`carousel-${genre.name.toLowerCase().replace(/ /g, "-")}`}
-                className="mt-8"
-              >
-                {renderMovies(genreMovies[genre.id] || [], genre.name)}
-              </div>
-            ))}
-            <div className="flex items-center">
-              <Divider marginClass="mr-5" />
-              <h1 className="text-4xl font-bold text-white mx-auto">Shows</h1>
-              <Divider marginClass="ml-5" />
+          ))}
+          {genres.map((genre) => (
+            <div
+              key={`${genre.id}|${genre.name}`}
+              id={`carousel-${genre.name.toLowerCase().replace(/ /g, "-")}`}
+              className="mt-8"
+            >
+              {renderMovies(genreMovies[genre.id] || [], genre.name)}
             </div>
-            {tvCategories.map((category) => (
-              <div
-                key={category.name}
-                id={`carousel-${category.name
-                  .toLowerCase()
-                  .replace(/ /g, "-")}`}
-                className="mt-8"
-              >
-                {renderMovies(
-                  categoryShows[category.name] || [],
-                  category.name,
-                  true,
-                )}
-              </div>
-            ))}
-            {tvGenres.map((genre) => (
-              <div
-                key={genre.id}
-                id={`carousel-${genre.name.toLowerCase().replace(/ /g, "-")}`}
-                className="mt-8"
-              >
-                {renderMovies(tvShowGenres[genre.id] || [], genre.name, true)}
-              </div>
-            ))}
+          ))}
+          <div className="flex items-center">
+            <Divider marginClass="mr-5" />
+            <h1 className="text-4xl font-bold text-white mx-auto">Shows</h1>
+            <Divider marginClass="ml-5" />
           </div>
-        </>
-      </WideContainer>
-    </HomeLayout>
+          {tvCategories.map((category) => (
+            <div
+              key={category.name}
+              id={`carousel-${category.name.toLowerCase().replace(/ /g, "-")}`}
+              className="mt-8"
+            >
+              {renderMovies(
+                categoryShows[category.name] || [],
+                category.name,
+                true,
+              )}
+            </div>
+          ))}
+          {tvGenres.map((genre) => (
+            <div
+              key={`${genre.id}|${genre.name}`}
+              id={`carousel-${genre.name.toLowerCase().replace(/ /g, "-")}`}
+              className="mt-8"
+            >
+              {renderMovies(tvShowGenres[genre.id] || [], genre.name, true)}
+            </div>
+          ))}
+        </div>
+      </ThiccContainer>
+    </SubPageLayout>
   );
 }

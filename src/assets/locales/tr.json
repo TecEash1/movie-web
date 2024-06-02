@@ -138,15 +138,11 @@
       },
       "morning": {
         "default": "Bu sabah ne izlemek istersiniz?",
-        "extra": [
-          "Before Sunrise'a iyi diyorlar"
-        ]
+        "extra": ["Before Sunrise'a iyi diyorlar"]
       },
       "night": {
         "default": "Bu akşam ne izlemek istersiniz?",
-        "extra": [
-          "Yoruldun mu? The Exorcist'e iyi diyorlar."
-        ]
+        "extra": ["Yoruldun mu? The Exorcist'e iyi diyorlar."]
       }
     }
   },
@@ -164,7 +160,6 @@
     },
     "menu": {
       "about": "Hakkımızda",
-      "donation": "Bağış yap",
       "logout": "Çıkış yap",
       "register": "Buluta eşitle",
       "settings": "Ayarlar",
@@ -417,7 +412,7 @@
   },
   "screens": {
     "dmca": {
-      "text": "Movie-web'in DMCA iletişim sayfasına hoş geldiniz! Fikri mülkiyet haklarına saygı duyuyoruz ve telif hakkıyla ilgili endişeleri hızlı bir şekilde ele almak istiyoruz. Telif hakkıyla korunan çalışmanızın platformumuzda uygunsuz şekilde kullanıldığını düşünüyorsanız lütfen aşağıdaki e-postaya ayrıntılı bir DMCA bildirimi gönderin. Lütfen telif hakkıyla korunan materyalin açıklamasını, iletişim bilgilerinizi ve iyi niyet beyanınızı ekleyin. Bu sorunları derhal çözmeye kararlıyız ve ayrıca movie-web'i yaratıcılığa ve telif haklarına saygılı bir yer olarak tutma konusundaki işbirliğiniz için teşekkür ederiz.",
+      "text": "movie-web'in DMCA iletişim sayfasına hoş geldiniz! Fikri mülkiyet haklarına saygı duyuyoruz ve telif hakkıyla ilgili endişeleri hızlı bir şekilde ele almak istiyoruz. Telif hakkıyla korunan çalışmanızın platformumuzda uygunsuz şekilde kullanıldığını düşünüyorsanız lütfen aşağıdaki e-postaya ayrıntılı bir DMCA bildirimi gönderin. Lütfen telif hakkıyla korunan materyalin açıklamasını, iletişim bilgilerinizi ve iyi niyet beyanınızı ekleyin. Bu sorunları derhal çözmeye kararlıyız ve ayrıca movie-web'i yaratıcılığa ve telif haklarına saygılı bir yer olarak tutma konusundaki işbirliğiniz için teşekkür ederiz.",
       "title": "DMCA"
     },
     "loadingApp": "Uygulama yükleniyor",

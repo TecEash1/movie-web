@@ -1,9 +1,9 @@
 {
   "about": {
-    "description": "movie-web er vefforrit sem leitar á netinu að streymum. Markmið liðsins er naumhyggju nálgun á að horfa á efni.",
+    "description": "movie-web er vefforrit sem leitar á netinu að straumum. Markmið liðsins er naumhyggju nálgun á að horfa á efni.",
     "faqTitle": "Algengar spurningar",
     "q1": {
-      "body": "movie-web hýsir ekki neitt efni. Þegar þú ýtir á eitthvað til að horfa á, er leitað á netinu fyrir það efni (Þú getur séð hvaða heimild við erum að nota á hleðslu skjánum og í 'myndbands heimildir' flipanum). Skrár eru aldrei settar inn af movie-web, allt er í gegnum leitarvél.",
+      "body": "movie-web hýsir ekki neitt efni. Þegar þú ýtir á eitthvað til að horfa á, leitað er á netinu fyrir það efni (Þú getur séð hvaða heimild við erum að nota á hleðslu skjánum og í 'myndbands heimildir' flipanum). Skrár eru aldrei settar in af movie-web, allt er í gegnum leitarvél.",
       "title": "Hvaðan kemur efnið?"
     },
     "q2": {
@@ -89,6 +89,11 @@
       "dmca": "DMCA",
       "github": "GitHub"
     },
+    "links": {
+      "discord": "Discord",
+      "dmca": "DMCA",
+      "github": "GitHub"
+    },
     "tagline": "Horfðu á uppáhalds þætti og myndirnar þínar með þessu opna hugbúnaða forriti."
   },
   "global": {
@@ -138,15 +143,11 @@
       },
       "morning": {
         "default": "Hvað myndirðu vilja horfa á þessum morgni?",
-        "extra": [
-          "Ég heyrði að Before Sunrise sé góð"
-        ]
+        "extra": ["Ég heyrði að Before Sunrise sé góð"]
       },
       "night": {
         "default": "Hvað myndirðu vilja horfa á í nótt?",
-        "extra": [
-          "Þreytt? Ég heyrði að The Exorcist sé góð."
-        ]
+        "extra": ["Þreytt? Ég heyrði að The Exorcist sé góð."]
       }
     }
   },
@@ -163,7 +164,6 @@
     },
     "menu": {
       "about": "Um okkur",
-      "donation": "Styrkja",
       "logout": "Skrá út",
       "register": "Samstilla við ský",
       "settings": "Stillingar",

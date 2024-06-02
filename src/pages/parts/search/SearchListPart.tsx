@@ -54,12 +54,20 @@ function SearchSuffix(props: { failed?: boolean; results?: number }) {
         <div>
           {(props.results ?? 0) > 0 ? (
             <>
-              <p>{t("home.search.allResults")}</p>
+              <>
+                <p>{t("home.search.allResults")}</p>
+                <Button
+                  className="px-py p-[0.3em] mt-3 text-type-dimmed box-content text-[17px] bg-largeCard-background text-buttons-secondaryText justify-center items-center"
+                  onClick={() => navigate("/discover")}
+                >
+                  Discover More
+                </Button>
+              </>
               <Button
-                className="px-py p-[0.3em] mt-3 text-type-dimmed box-content text-[17px] bg-largeCard-background text-buttons-secondaryText justify-center items-center"
+                className="px-py p-[0.3em] mt-3 rounded-xl text-type-dimmed box-content text-[17px] bg-largeCard-background text-buttons-secondaryText justify-center items-center"
                 onClick={() => navigate("/discover")}
               >
-                Discover more
+                {t("home.search.discoverMore")}
               </Button>
             </>
           ) : (

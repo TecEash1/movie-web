@@ -132,21 +132,15 @@
     "titles": {
       "day": {
         "default": "Na co byste se chtěli dnes odpoledne dívat?",
-        "extra": [
-          "Chceš zažít dobrodružství? Jurský Park je pro tebe."
-        ]
+        "extra": ["Chceš zažít dobrodružství? Jurský Park je pro tebe."]
       },
       "morning": {
         "default": "Na co byste se chtěli dnes ráno dívat?",
-        "extra": [
-          "Slyšel jsem, že Před úsvitem je super"
-        ]
+        "extra": ["Slyšel jsem, že Před úsvitem je super"]
       },
       "night": {
         "default": "Na co byste se chtěli dnes večer dívat?",
-        "extra": [
-          "Unaven? Slyšel jsem, že Vymítač ďábla je super."
-        ]
+        "extra": ["Unaven? Slyšel jsem, že Vymítač ďábla je super."]
       }
     }
   },
@@ -163,7 +157,6 @@
     },
     "menu": {
       "about": "O nás",
-      "donation": "Přispět",
       "logout": "Odhlásit se",
       "register": "Synchronizovat do cloudu",
       "settings": "Nastavení",
@@ -252,7 +245,6 @@
     },
     "menus": {
       "downloads": {
-        "copyHlsPlaylist": "Zkopírovat link HLS playlistu",
         "disclaimer": "Stahování probíhá přímo u poskytovatele. movie-web nemá kontrolu nad tím, jak jsou stahování poskytovány.",
         "downloadSubtitle": "Stáhnout aktuální titulky",
         "downloadVideo": "Stáhnout video",
